@@ -8,4 +8,8 @@ dist/
 __pycache__/
 venv/
 
+backend/venv/
+
+datasets/raw_text/
+
 .DS_Store

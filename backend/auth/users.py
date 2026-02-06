@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import datetime
-from config import Config  # root config
+from config import Config
 
 DB_PATH = Config.DB_PATH
 
