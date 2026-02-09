@@ -1,0 +1,688 @@
+{
+  "subject": "AI",
+  "total_questions": 71,
+  "unique_clusters": 65,
+  "questions": [
+    {
+      "question": "What are applications of Expert System? Describe the Development stages of Expert System briefly.",
+      "frequency": 4,
+      "years": [],
+      "marks": "[4+4]",
+      "has_subparts": false,
+      "variations": [
+        "What are applications of Expert System?",
+        "What is an expert system? Explain its advantages and disadvantages.",
+        "What is an Expert System? Explain the steps of an Expert System development."
+      ],
+      "cluster_id": 5,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "What is Frame? How is it different from semantic net in knoWledge representation?",
+      "frequency": 2,
+      "years": [],
+      "marks": "[4+4]",
+      "has_subparts": true,
+      "variations": [
+        "What are semantic nets and frames? How frames are useful in semantic nets."
+      ],
+      "cluster_id": 2,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is a neural network? Explain the back propagation algorithms and perceptron. 12+4+41",
+      "frequency": 2,
+      "years": [],
+      "marks": "(4+4)",
+      "has_subparts": true,
+      "variations": [
+        "What is neural network? Explain back-propagation algorithm learning."
+      ],
+      "cluster_id": 1,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is a Nahual Language Processing? Describe Natural Language Processing Steps and its application.",
+      "frequency": 2,
+      "years": [],
+      "marks": "[2+8]",
+      "has_subparts": true,
+      "variations": [
+        "What is a natural language processing? Explain it."
+      ],
+      "cluster_id": 0,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Define AI. what is the importance of Tuming Test in AI? List applications of AI.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[8]",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 49,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "what is problem space? Solve the following crypto arithmetic problem by showing all the steps.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+6]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 51,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Discuss the hill climbing search algorithm along with problem associated with it and discuss their solutions. Why simulated annealing is important?",
+      "frequency": 1,
+      "years": [],
+      "marks": "16+21",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 61,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Given premises “Every American who sells weapons to hostile nations is a criminal. The country xYZ is enemy of America. All of its misallies in XyZ were sold by Donald who is an American.” Prove that Donald is a criminal by using FopL based ,roiotioo refutation method.",
+      "frequency": 1,
+      "years": [],
+      "marks": "I8l",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 50,
+      "mapped_chapter": null
+    },
+    {
+      "question": "why _cNF is required? Explain all the steps used to convert a quantified statem€Nrt with suitable example [2+6]",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+6]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 53,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Why semantic network and frames are important in AI? Provide exzuxrples of both with FOPL statements exermple.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 57,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "What is a genetic algorithm? Explain all the steps in genetic algorithm with block diagram and operators.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 58,
+      "mapped_chapter": null
+    },
+    {
+      "question": "List the importance of expert system in real life. Draw block diagram of expert system architecture and explain all blocks.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+6]",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 63,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "What is a McCulloch/Pitts neural network? Explain it with reference to AND gate. Justiff that it cannot be applied to Excrusive oR gate.",
+      "frequency": 1,
+      "years": [],
+      "marks": "(4+4)",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 56,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Justiff that NLP is one of the important part of an AI. Explain the steps involved in the NLP.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+6]",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 55,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "What is a rational agent? “Syslem that think like humans” and “System that act like humans” are the part of artificial intelligence. Justiff these statement with practical example.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[1+6]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 52,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "Define constraint satisfaction problem (CSP). Solve the following crypto-arithmetic problem, where different letters denote different integers and identical letters denote sarne integer. SWIM + WEAR = RELAX.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[1+6]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 59,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Why Searching is important in problem solving? what do the drawbacks of greedy besF first search and how A* search algorithm solve it",
+      "frequency": 1,
+      "years": [],
+      "marks": "12+71",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 54,
+      "mapped_chapter": null
+    },
+    {
+      "question": "a) Assume the following facts: . John likes all kinds of food, . Apples are food. Chicken is food. Anything anyone eats and isn't killed by is food.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+6]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 62,
+      "mapped_chapter": null
+    },
+    {
+      "question": "b) Differentiate between forward and backward chaining.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 60,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Define inductive Learning. Explain in detail about ID3 process with suitable example.",
+      "frequency": 1,
+      "years": [],
+      "marks": "12+61",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 42,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is self-organizing Map (SOM)? Explain all the steps involved in SOM with suitable example.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+51]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 27,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Justify that the study of gene is one of important part in the AI. List down the steps involved in genetic algorithm with an example.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[4+41]",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 45,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "How knowledge acquisition is performed in expert system? Explain one real expert system exaryrple with proper architecture.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+5]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 64,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "Write short notes on: i) Machine Vision ii) Supervised Vs Unsupervised learning",
+      "frequency": 1,
+      "years": [],
+      "marks": "[12x4l]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 46,
+      "mapped_chapter": null
+    },
+    {
+      "question": "If the Turing Test is passed, does this show that computers exhibit intelligence? State your reasons.",
+      "frequency": 1,
+      "years": [],
+      "marks": 8,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 33,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "Solve the following puzzle by assigning numeral (0-9) in such a way that each letter is assigned unique digit which satisfu the following addition. ONE + ONE + TWO: FOUR",
+      "frequency": 1,
+      "years": [],
+      "marks": "[4+5]",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 22,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Explain the necessity of searching techniques in AI? Differentiate between Breath first search and Depth first search with their performance criteria.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[4+5]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 30,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "Assume the following facts: D Horses, cows, pigs are mammals ii) An offsprittg of a horse is a horse iii) Bluebeard is a horse iv) Bluebeard is Charlie's parent v) Offspring and parent are inverse relations vi) Every mammal has a parent",
+      "frequency": 1,
+      "years": [],
+      "marks": "(4+4)",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 37,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Prove Charlie is a horse using resolution refutation.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[8]",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 43,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is causal net? How does Bayes Theorem calculate the probability in a causal net?",
+      "frequency": 1,
+      "years": [],
+      "marks": "[4+4]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 38,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Convert given sentences into Semantic Network. i) The height of the adult male is 5.10",
+      "frequency": 1,
+      "years": [],
+      "marks": "[4+4]",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 35,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Explain with example calculation.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[4+4]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 47,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Write short notes on: i) Predicate logic ii) Unsupervised learning",
+      "frequency": 1,
+      "years": [],
+      "marks": "[12]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 28,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Define a NLU and a NLG. List down the different steps involved in the natural language processing (NLP) with suitable examples.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+6]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 48,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Define Hebbian learning. Use Hebbian learning algorithm to Construct Hebbian Network which perform line AND Function.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[8]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 34,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is an Artificial Intelligence (Al)? Expiain any two applications of Al in real field.",
+      "frequency": 1,
+      "years": [],
+      "marks": 8,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 24,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "What do you wrderstand by Constraint satisfaction problem? Solve the following Cryptarithmetic prcblem. [1+6] SEND + MoRE MONEY",
+      "frequency": 1,
+      "years": [],
+      "marks": "[1+6]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 32,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is a searching? Explain Breadth First Search and Depth First Search and compare their performance criteria.",
+      "frequency": 1,
+      "years": [],
+      "marks": "(4+4)",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 23,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is a knowledge, representation and reasoning? Describe forward chaining with practical exaurple.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+5]",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 11,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Assume the following facts: - tA . John likes all kinds of food. . APPles are food. r Chicken is food. o Anything anyone eats and isn't killed by is food. r Bill eats peanuts and is still alive. o Sue eats everything Bill eats. Prove that John likes peanuts using resolution refutation",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+5]",
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 40,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is a machine learning? Explain in detail about Boltzmann machines with suitabte algorithm and explanations.",
+      "frequency": 1,
+      "years": [],
+      "marks": "[2+8]",
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 18,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Solve the following crypto-arithmetic problem, where different letters denote different",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 13,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Differentiate between informed and blind search. How depth search is different to breadth",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 36,
+      "mapped_chapter": null
+    },
+    {
+      "question": "All oversmart persons are stupid. Children of oversmart presons are naughty. Ram is",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 39,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Explain the step involved in conjunctive normal form (CNF) with suitable example.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 41,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is semantic net? Explain with suitable example.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 29,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is machine vision? Discuss about the algorithm of Genetic Algorithm.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 25,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Define machine translation in NLP. Explain the challenges of machine translation.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 19,
+      "mapped_chapter": null
+    },
+    {
+      "question": "3. Discuss the hilFclimbing search algorithm along with problems associated with it and discuss their",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 44,
+      "mapped_chapter": 1,
+      "chapter_name": "Introduction to Artificial Intelligence"
+    },
+    {
+      "question": "Discuss any two fields of your daily life'where art?ficiel irnelligence has been applied.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 20,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Given premises: Every'American who sells weapons to hostile nations is a criminal. The countryAbc",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 17,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is Fuzzy tearning? Exptain with a practical examfle.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 31,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Explain the learning framework with suitable example.",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 21,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What is a Hopfield Network? Explain all the steps involved in the Hopfield Network with suitable",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 14,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Write short notes: (anY two)",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 26,
+      "mapped_chapter": null
+    },
+    {
+      "question": "What do.you mean,{lata dryiven rqasoning? How can you relate with chaining?",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 12,
+      "mapped_chapter": null
+    },
+    {
+      "question": "How can you convort to coniunctive normal foru? Explain all the stepr with",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 15,
+      "mapped_chapter": null
+    },
+    {
+      "question": "CAII mrrried employeer earning Rs. 2251000 or more per yoff in Nepel pey",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 8,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Drrw thc block dtagram of the stnrcturc of an expert syctem and oxphin it. How",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 16,
+      "mapped_chapter": null
+    },
+    {
+      "question": "lVhat ir o depth first seorch? Explain it with rcquined algorithm. IIow crtr you",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 7,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Explain in detail about II)3 process with suitable exampla Explain dlfrerent",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": true,
+      "variations": [],
+      "cluster_id": 10,
+      "mapped_chapter": null
+    },
+    {
+      "question": "lVhat is a ftrzzy logic and explain its importance? Erplain the steps involved in",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 6,
+      "mapped_chapter": null
+    },
+    {
+      "question": "\\ilhat ir a MeCulloch/Pittg neural network? Explain it with rcferrcnce to AND",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 9,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Explrin in detail about forrerd cheining with suitable erample. lVhet are the",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 3,
+      "mapped_chapter": null
+    },
+    {
+      "question": "Explrin the importances of neturel language processing. Whet are the iscues fur",
+      "frequency": 1,
+      "years": [],
+      "marks": null,
+      "has_subparts": false,
+      "variations": [],
+      "cluster_id": 4,
+      "mapped_chapter": null
+    }
+  ],
+  "metadata": {
+    "processed_at": "2026-02-09T00:53:15.091026",
+    "similarity_threshold": 0.75,
+    "total_source_files": 1,
+    "chapter_mapping_available": true,
+    "questions_with_years": 0,
+    "questions_with_marks": 38,
+    "questions_with_subparts": 23
+  }
+}

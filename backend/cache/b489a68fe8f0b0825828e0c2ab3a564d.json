@@ -1,0 +1,507 @@
+{
+  "text": "*\nTRIBHUVAI{ I.JNIVERSITY\nINSTITUTE OF ENGINEERING\nExamination Control Divigion\n2075 Bhsdrs\nSubject: - Artificial Intelligence (Cr6$)\n{\n{\n{\n/\nCandidates are required to give their answers in their own words as far as practicable.\nAttempt AA questions.\nThe figures in the rnargin indicate full Marlcs.\nAssume suitable data if necessary.\nt' What is an intelligent agent? How does learning agent work? \ntS]\n2. What do you understand about well defined problems? Explain about problems that can\nbe solved using production rules with an example. \n[2+61\n3. Discuss about the evaluation criteria for search algorithm. State the problems in hill\nclimbing search algorithm. \nt4+41\n4. Why CNF is necessary? \"Everyone who loves all animals af,e loved by somsone\"\nrepresent this statement in FOPL and explain all the steps involved to convert it into CFN. 12+61\n5. What is knowledge representation? How semantic network is used to represent\nknowledge? \n12+61\n6. What do you understand by swarm intelligence? Suppose chromosomes are of the form\nx = a b c d e f g h with a fixed length ofeight gcnes. Each gene can be any digit between\n0 and 9. Let the fitness of individual x be calculated as: \n[2+8]\nf(x)=(a*b)-(c+d)+(e+f)-(g+h) and let the initial population consist of four\nindividuals with the following chromosomes.\n7. What is Natural Language Processing (NLP)? Discuss the different steps in\nsuitable examples. Also list down major issues in NLP.\n8. Explain Hopfield network with an example.\n9. Write short notes on:\ni) Predicate logic\nii) Unsupervised learning\niii) Breadth first vs depth first search\nNLP with\n16+2+21\nt8l\n[3 x4]\n\n*\n4t \nTRIBHUVAN UNIVERSITY\nINSTITUTE OF ENGINEERING\nExamination Control Division\n2075 Baisakh\nExam.\nLevel\nBE\nFull Marks\nProgramme\nBCT\nPass Marks\nYear lPart\nru/II\nTime\n3 hrs.\nS\"Sigtt: - Artificial Intelligence Gr6$)\nr' candidates are required to give their answers in their own words as far as practicable.\nr' AmmF All questions.\nr' The figures in the margin indicate FulI Ma rs,\ny' Assurne suitable dota if necessory.-\n1. Define AI. what is the importance of Tuming Test in AI? List applications of AI. \n12+4+21\n2. what is problem space? Solve the following crypto arithmetic problem by showing all the\nsteps. \n[2+61\nBASE+ BALL: GAMES\n3. Discuss the hill climbing search algorithm along with problem associated with it and\ndiscuss their solutions. Why simulated annealing is important? \n16+21\n4' Given premises \"Every American who sells weapons to hostile nations is a criminal. The\ncountry xYZ is enemy of America. All of its misallies in XyZ were sold by Donald who\nis an American.\" Prove that Donald is a criminal by using FopL based ,\"roiotioo\nrefutation method. \nI8l\n5. why _cNF is required? Explain all the steps used to convert a quantified statem€Nrt with\nsuitable example \n[2+6]\n6' Why semantic network and frames are important in AI? Provide exzuxrples of both with\nFOPL statements exermple.\n7. What is a genetic algorithm? Explain all steps in genetic algorithm with block diagram\nand operators.\n8. List the importance of expert system in real life. Draw block diagram of expert system\narchitecture and explain all blocks. \n' v \nt 2+6]\n9' What is a McCulloch/Pitts neural network? Explain it with reference to AND gate. Justiff\nthat it cannot be applied to Excrusive oR gate. \n- - e-- \ntg]\n10' Justiff that NLP is one of the important part of an AI. Explain the steps involved in the\nNLP. \n---Et8I\n*:NG,F\n[2+6]\nt8l\n\ni\n4I \nTRIBHUVAN UNIVERSIry\nINSTITUTE OF ENGINEERING\nExamination Control Division\n2A7 4 Bhadra\n. s *i::!::-4$-i!-gBl\"hl eltjsen:e {c!!s l)\nr' Candidates are required to give their answers in their own words as far as practicable.\nr' Afienpt 4! questions.\nr' The figures in the margin indicate Full Markg\n/ Assume suitable dsta if necessary.\n1. What is a rational agent? \"Syslem that think like humans\" and \"System that act like\nhumans\" are the part of artificial intelligence. Justiff these statement with practical\nexample. \nt 1+6]\n2. Define constraint satisfaction problem (CSP). Solve the following crypto-arithmetic\nproblem, where different letters denote different integers and identical letters denote sarne\ninteger. SWIM + WEAR = RELAX. \n[l+6]\n3. Why Searching is important in problem solving? what do the drawbacks of greedy besF\nfirsi search and how A* search algorithm solve it' Explain with an example. \n12+71\n4. a) Assume the following facts:\n. John likes all kinds of food,\n. Apples are food.\n. Chicken is food.\n. Anything anyone eats and isn't killed by is food.\no Bill eats peanuts and is still alive.\n. \nSue eats everything bill eats.\nProve that John likes peanuts using resolution'\nb) Differentiate between forward and backward chaining.\n5. What is Frame? How is it different from semantic net in knoWledge representation?\n6. Define inductive Learning. Explain in detail about ID3 process with suitable example. 12+61\n7. What is self-organizing Map (SOM)? Explain all the steps involved in SOM with suitable\nexample. \nt2+51\n8. Justify that the study of gene is one of important part in the AI. List down the steps\ninvolved in genetic algorithm with an example. \nt4+41\ng. How knowledge acquisition is performed in expert system? Explain one real expert\nsystem exaryrple with proper architecture. \n[2+5]\n10. Write short notes on: (Any two) \nl2x4l\na) Machine Vision\nb) Supervised Vs Unsupervised learning\nc) Back ProPagation Algorithm\nds*{.\nt8l\nt4l\n17l\n\n4l\nTRIBHUVAN UNIVERSITY\n(\ni Exam\n,'*\nINSTITUTE OF ENGINEERING\nExamination Control Division\ni Programme i BCT\ni-----*'-'-'----'-----^! \n- -\ni Year lPart i III / II\n2073 Magh\nSubject: - Artificial Intelligence Gr653)\n,/ Candidates are required to give their answers in their own words as far as practicable.\n'/ Attempt All questions.\n'/ The figures in the margin indicate Fall Marks.\n./ Assume suitable data if necessary.\n1. Define Artificial Intelligence (AD. Describe the importance and practical application\nof AI. \nt6l\n2. A farmer has a goat, a wolf and a cabbage on the west side of a river. He wants to get all\nof his animals and his cabbage across the river onto the east side. The farmer has a row\nboat but he only has enough room for himself and one other thing. The wolf will eat the\ngoat if they are left together alone. The goat will eat the cabbage if they are left together\nalone. How can the farmer get everything on the east side? \nt8]\ni) Formulate this puzz,le as search\nii) Solve this problem-using search (any method)\nDraw the search tree and show the final solution\n3. Devise an example to show how A* algorithm uses path cost and heuristic cost to\ngenerate best solution.\n4. Consider the following axioms:\ni) Anyone whom Mary loves is a football star\nii) Any student who does not pass does not play\niii) John is a student\niv) Any student who does not study does not pass\nv) Anyone who does not play is not a football star.\nProve that \"If John does not study, then Mary does not love John\" Resolution by\nRefutation.\n5. A doctor is called to see a sick child. The doctor has prior information that 90% of sick\nchildren in that neighborhood have the flu, while the other lV/o are sick with measles. Let\nF stand for an event of a child being sick with Flu and M stand for an event of a child\nbeing sick with measles. Assume for simplicity that there no other maladies in that\nneighborhood. A well-known (and common) symptom of measles is a rash and has\nprobability of 0.95. \nt8l\nHowever, very occasionally, children with flu also develop rash and has probability of\n0.08.\nUpon examining the child, the doctor finds a rash. What is the probability that the child\nhas measles?\nExplain Frames and Semantic lGi with examples. List down their advantages and\nlimitations. \n[4+4]\nWhat is Fuzzy Logic and why is it important? Explain about Mamdani Fuzzy Inference\nMethod with example. \nt3+71\nWhat do you understand by Perception? How can we design a neural network that acts as\nan XOR gate? \nU+71\nDifferentiate between declarative knowledge and procedural knowledge. Describe expert\nsystem with its architecture and practical uses. \n[3+5]\nt8l\ntl0l\n6.\n7.\n8.\n9.\n\n*\n4I \nTRIBHUVAN UNIVERSITY\nINSTITUTE OF ENGTNEERING\nExamination Control Division\n2073 Bhadra\nSubject: - Artificial Intelligence Gr653)\n,/\n,/\n,/\n,/\nCandidates are required to give their answers in their own words as far as practicable.\nAttempt All questions.\nThe figures in the margin indicate Full Marks.\nAssume suitable data if necessary.\n1. If the Turing Test is passed, does this show that computers exhibit intelligence? State\nyour reasons. \nl7l\n2. Solve the following puzzle by assigning numeral (0-9) in such a way that each letter is\nassigned unique digit which satisfu the following addition. \nt7l\nONE + ONE + TWO: FOUR\nExplain the necessity of searching techniques in AI? Differentiate between Breath first\nsearch and Depth first search with their performance criteria. \n[4+5]\nAssume the following facts: \nt8]\nD Horses, cows, pigs are mammals\nii) An offsprittg of a horse is a horse\niii) Bluebeard is a horse\niv) Bluebeard is Charlie's parent\nv) Offspring and parent are inverse relations\nvi) Every mammal has a parent\nProve Charlie is a horse using resolution refutation.\nWhat is causal net? How does Bayes Theorem calculate the probability in a causal net?\nJ.\n4.\n5.\n6.\nExplain with example calculation. \n.\nConvert given sentences into Semantic Network.\ni) The height of the adult male is 5.10\niD Baseball player is an adult male.\niii) Adult male is a person.\niv) Batting average of Baseball players is 0.252\nv) Pee-wee-Reese is a Fielder.\nvi) Fielder is Baseball player.\nvii)Team of pee-wee-Reese is Brooklyn Dodger.\n\"Learning is an essential characteristic for intelligent agents.\" List down justification on\n.this statement. Write about the role learning with suitable example.\nWhat are applications of Expert System? Describe the Development stages of Expert\nSystem briefly.\nDefine a NLU and a NLG. List down the different steps involved in the natural language\nprocessing (NLP) with suitable examples.\nt7l\nt7l\n7.\n8.\n[4+4]\n12+6)\nl2+71\n9.\n10. Define Hebbian learning. Use Hebbian learning algorithm to Construct Hebbian Network\nwhich perform line AND Function. \nt3+71\n***\n\n_,- wElEf.\n4I \nTRIBHWA}I I.JNIVERSITY\nINSTITUTE OF ENGINEERING\nExamination Control Division\n2072 Ashwin\nExam.\nItcgu lrtr'\nLeVel\nBE\nFull Marks\nProgramme\nBCT\nPass MarI$\nYear / Part\nm/II\nTime\n3 hrs.\nSubject: - Artificial Intelligence (CT653)\n/ Candidates are required to give their answers in their own words as far as practicable.\n{ Attempt Allquestions.\n{ TheJigures in the margin indicate Full Marks.\ny' Assume suitable data if necessary.\nl. What is an Artificial Intelligence (Al)? Expiain any two applications of Al in real field. \nlT\n2. What do you wrderstand by Constraint satisfaction problem? Solve the following Cryptarithmetic prcblem. \n[1+6]\nSEND\n+ MoRE\nMONEY\n3. What is a searching? Explain Breadth First Search and Depth First Search and compare\ntheir performance criteria. \nt9I\n4. What is a knowledge, representation and reasoning? Describe forward chaining with\npractical exaurple. \n[2+5]\n5. Assume the following facts: \n- tA\n. \nJohn likes all kinds of food.\n. APPles are food.\nr Chicken is food.\no Anything anyone eats and isn't killed by is food.\nr Bill eats peanuts and is still alive.\no Sue eats everything Bill eats.\nProve that John likes peanuts using resolution refutation\n6. What are semantic nets and frames? How frames are useful in semantic nets. \nUl\n7. What is a machine learning? Explain in detail about Boltzmann machines with suitabte\nalgorithm and explanations. \n[2+8]\n8. What is a neural network? Explain the back propagation algorithms and perceptron. 12+4+41\n9. What is an expert system? Explain its advantages and disadvantages. \nt8l\n10. What is a Nahual Language Processing? Describe Natural Language Processing Steps\nand its application. \n12+61\n!f **\nL\n\n4I \nTRJBHWAN UNIVERSITY\nINSTITUTE OF ENGINEERING\nExamination Control Division\n2070 Bhadra\nExam.\nIte gu I:t I'\nLevel\nBE\nFuIl Marks\nK|]\nProgramme\nBCT\nPass Marks\nYear / Part\nm/II\nTime\n3 hrs.\nSubject: - Artificial Intelligence (CT653)\nr' Candidates are required to give their answers in their own words as far as practicable.\n{ Attempt All questions.\nr' The/igures in the margin tndicate Full Mdrks.\n{ Assume suitable data if necessary.\nl. Define AI. When a machine is said to be passed Turing test? Give any two examples of\nconstraint satisfaction problem. \n[2+5+1]\n2. Solve the following crypto-arithmetic problem, where different letters denote different\nintegers and identical letters denote same integer. WRONG + WRONG : RIGHT.\nExplain the steps that you have followed. \n[5+3]\n3. Differentiate between informed and blind search. How depth search is different to breadth\nfirst search. Compare with evalnation parameters. \n[4+41\n4. All oversmart persons are stupid. Children of oversmart presons are naughty. Ram is\nchildren of Hari. Hari is oversmart. Show that Ram is naughty. Using FOPL based\nresolution method. \nt8l\n5. Explain the step involved in conjunctive normal form (CNF) with suitable example. \nt8I\n6. What is semantic net? Explain with suitable example. \nt8I\n7. What is machine vision? Discuss about the algorithm of Genetic Algorithm. \nt2+61\n8. What is neural network? Explain back-propagation algorithm learning. \n14+41\n9. What is an Expert System? Explain the steps of an Expert System development. \n14+41\n10. Define machine translation in NLP. Explain the challenges of machine translation. [+7]\n*{. *\n\nv*''\n4I \nTRIBHUVANT'NIVERSITY\nINSTITUTE OF ENGINEERING\nExamination Control Division\n2070 Magh\nExam.\n\\sr lilcli (l(|66 & l.:rtu'lfrrtch)\nLevel\nBE\nFull Marks\nProgramme\nBCT\nPass Marks\nYear / Part\nm/II\nTime\n3 hrs.\nSubject: - Artificial Intelligence (CT653)\n{ Candidates are required to give their answers in their own words as far as practicable.\nr' Aftempt AU questions.\n'/ TheJigures in the margin indicate Full Marhs.\n/ Assume suitable data tf necessary.\nl. What is Artificial Intelligence (AI)? Discuss brief history of AI with Chronological\ndevelopment. \n12+6)\n2. Why searching is necessary in AI? Explain about the role of production system with\nsuitable example. \n12+61\n3. What is horn clause? Differentiate between Depth First Search and Breadth First Search. [+7]\n4. Explain backward chaining with suitable example and compare with forward chaining. 14+41\n5. Why do we need FOPL? State any three rules of inference. How can we make the\nmachine with learning capacity? \nt2+3+37\n6. Define Boltanann Machine. How knowledge can be represented using semantic network?\nExplain with suitable example. \n[+7]\n7. What is Machine Leaming? What is Fuzzy Logic? Explain the Fvzzy Inference with\nsuitable example. \nt2+61\n8. Differentiate declarative knowledge and procedural knowledge. Explain the architecture\nof expert system. \n12+61\n9. What is the role of perceptron in neural network? Explain about bakpropagation\nalgorithm. \n[3+5J\n10. What is Natural Language Processing (NLP)? Discuss the different issues related with\nNLP with example. \n12+61\n{:!S*\nTRJBHI.IVAN UNIVERSITY\nINSTITUTE OF ENGINEERING\nControl Division\n2070 Chitra\nSubject: - Artificial Intelligence (EG743CT)\nr' Candidateq are required to give their answers in their own words as far as practicable.\nr' Attempt Ail questions.\nr' Thefigures in the margin indicate Full Marks.\n/ Assume suitable data if necessary.\nl. Define Artificial Inrclligencc (Al)? Justiry thst'Al rnakcs machinc wulcing mm hruran\n. friendlj'. \nt8l\n2. Define expert syst€m. Whst atthe builditrg blocl$ ofexpcrt E sficm? \nttl\n3. Comparc the scarch sfidc5/ of breadth first.search wi0r d€Fh first serch. \nt8l\n4. Convert thc following smt€nccn in to FOPL acld h€ncG itrto CNF \nt8l\ni. Evcryone likes someone\"\nii. AU the students who visitod *icnoe muscuiir are not engiruring s;tudmt\niii. Sumit likcs alt finits ftd arr rich vitunin ,{.\niv. Shpnr likes all th movic! that lftishna likec\n6. E:cplain lcarning franrcwort wifir sui0$lc orampla\n6. What is baclcward chaining? E plain wi& suit$lc cxample.\n7. What are the diffGmcnt opcrators associated in genctic algod*rm.\n8. Differmtiste betrroen supcrviscd harning md unsryervised lcarning.\n9. Explain the diftrent issues ofNatural tanguagp hoccssing NLB.\n10. Explain different forms of lcnowledge modelling tec,hnQues\"\nExam.\nOId Back Q065 & Earlier Batch)\nLevel\nBE\nFull Marks\nProgramme\nBCT\nPass Marks\nYear / Part\nrV/I\nTime\n3 hrs.\ntrl\nI8I\ntrl\nt8l\nt8l\nt8I\n***\n\n. 4I \nTRIBHWAN UNIVERSITY\nINSTITUTE OF ENGINEERING\nExamination Control Division,\n2069 Bhadra\nExam.\nItcgular'(2066 ,.t [.ufcr l]atch)\nLevel\nBE\nFull Marks\nProgramme\nBCT\nPass Marks\nYear lParl\nm/il\nTime\n3 hrs.\nSubieet: - Artificial Intelligence (CT 653)\nr' Candidates are required to give their answers in their own words as far as pmcticable.\nr' Attempt All questions.\nr' Thefigurei in the margin indtcate Full Marks.\nr' Assttme suitable data if necessary.\n1. Discuss any two fields of your daily life'where art?ficiel irnelligence has been applied. \nl7l\ni, 5olr\" the following crypto-arithmetic probtem, where different letterc denote different intGgerc\nand ldentical letters deqgte same integer. IOBIC + IOGIC = PRBI€6\nShow all the step of solving through constraint satisfaction problem. \n0)\n3. Discuss the hilFclimbing search algorithm along with problems associated with it and discuss their\nsolutions. \n(9)\n4. Given premises: Every'American who sells weapons to hostile nations is a criminal. The countryAbc\nis enemy of America. All of the missiles inAbc were sold by John. John is an American.\nProof: John is a criminal. \n(10)\n5 What are the different knowledge representation models? Discuss semantic nets with an example. l7l\n6. What is Fuzzy tearning? Exptain with a practical examfle. \n(4)\n7. Explain the learning framework with suitable example. \n(5)\n8. What is a Hopfield Network? Explain all the steps involved in the Hopfield Network with suitable\nexample. \n(8)\n9; Exptain different s6p-s of exp€rt sTstem developmp:O[uyifn an e*amp!e., \n(8]\n10. What is a natural language processing? Explain it.\n(6)\n(4x2=8)\n11. Write short notes: (anY two)\ni. \nSkolemization\nii.' \nMachine vision\niii, \nHuman Brain verses Neural Network\n*:F*\nI\n\n/\\ \n./'\nTRIBHTJVANUNryERSIry\nINSTITUTE OF ENGINEERING\nExamination Control Division\n2068 Chaitra\nExrm.\nResular / Back\nLevel\nBE\nFuIl Marks\nProgramme\nBCT\nPass Marks\nYear / Part\nry/r\nTime\n3 hrs.\nS ubj ect : - Artificial Intelligence\n{ Candidates are required to give their answers in their own words as far as practicable.\n{ Attempt All questions.\nr' AA questions carry equal marks.\ny' Assume suttable data if necessary.\nl. Define erd difierentiate between osystem that think like humens' eni (syrtom\nthat act like humans\". \\ilhlt ere the ethical issues in the ertiflcial lntell'igence?\n2. How can you convort to coniunctive normal foru? Explain all the stepr with\nsuitable exlupler.\n3. CAII mrrried employeer earning Rs. 2251000 or more per yoff in Nepel pey\ntores. All unmerried employee eaming Rr. 2001000 or more pcr ycrr in Ncpel\npry trros. Ihe univorrity pnofessor of Nepat crrrrc Rs. 4001000 and har to pey\n25o/o tnxer,. No othcr cmployee errns Eonc than the pnofecoor in the univcruity.\nSomc of Ncpalece citlzens earn less that Rs. 2fi) per dey and they dontt have to\npey ony texeg'. Represent the above sentenc'es in first-order logic and erpldr\neach step.\n4. Drrw thc block dtagram of the stnrcturc of an expert syctem and oxphin it. How\ncrn you rtpnment expert system uring if-then mlec?\n5. lVhat ir o depth first seorch? Explain it with rcquined algorithm. IIow crtr you\nmodify it to bc an informed search?\n6. Explain in detail about II)3 process with suitable exampla Explain dlfrerent\nfactoru involved in the learning\n7. lVhat is a ftrzzy logic and explain its importance? Erplain the steps involved in\nthe fuzzy logicr.\n8. \\ilhat ir a MeCulloch/Pittg neural network? Explain it with rcferrcnce to AND\ngate. Justify that McCullochPitts neural network can't be epplied to EX-OR\nglte.\n9. Explrin in detail about forrerd cheining with suitable erample. lVhet are the\nepp[catlons of forrerd chanlnig?\n10. Explrin the importances of neturel language processing. Whet are the iscues fur\nthe netural lenguage prrocesslng?\nrl.**\n\n34\" \nTRlBHwAlrtnnrrensry\n, .,. .. SsTITUTE oF ENGTNEERTNG\n' Examination Control Division'\nzo6A\nExarn.\nResular / Baik\nLevel\nBE\nFuII Marks\nProgramme\nBCT\n'Pass Marks\n2 L-^\nYoqr I JDqrl\n_TY-LLTirne-------:\nArtificial\n,/ Candidates 4ie required to.give their answers in their own words as far as practicabie-\n./ Attempt AII queitions,\n'/ All quesltons carry bquat marlcs.\n'/ Asiume siitable da,ta if necesiary.\n1.J\n.2.\n'.,.\n.:'i\n4.\n-5.\nand \"system that acts rationally\" is .\nexamples.\nExplain aII the steps involved in the conjunctive normal for.m with. suitable\n'practical examples. Ho* can yourealize'it using'suitable'haidware?'-.\n*A liiy properfy of deductive systems is that they are purely syntactic, so that'\nderivations can be verified withbut considering any interpretation.'Thus a sound\nargurnent'is correct in every possible intertriretdtion .of the language, regardless .\nrvhefher that interpretition is about mathematics, ecoBom.ics, or sorne .othei\n. .. .--- ...-.. .l: \n- -; - ; r,-\narea.\" jRppresent the above sentences in first-order logic and explain each step.\n.:.\nWhat is, an expert sysfem? Draw th.e block diagrim of an expert iystem and\nexplain iL Explaln the importance of if tlen rules.in the expert sysf.e-m....\n:\nJustify. that the application of queue'is importanf in tbe s'earching. Explain any\none.informed search.techniqueinvolv'ihg queue along rvith its alg6rithm:- .-- .-\n6. What do you mean Py mf proces$? Explain in adtait about ID3 process with\nsuitableetample. ' , . \n.\n7. Justify that the study of gene is one of thd importarit part in tbe AI. f'-Flain the\n8. What do you mean by superwised learning? Exptain any. one type of suptirwised\nlearning with practical example. \n'\n9. What.do you mean by forward chaini.ng? Explain itwith suitable block diagram.\nDiffqrentiate it with bacliward chaining..:\n10. Differentiate between natural lahguage understanding and natural.laiguage\ngenerating. Explain the'different ste\"ps in ttr\" natural l\"o'gq3g\" prgcessing. - \n-.\n***\n34 \nTRIBHWANI'MVERSITY\nINSTITUTE OF ENGII{EERING\n. -...- -..-Examin ation--eontrol-Div,isis\nzo67 Ashadh\nExam.\nResularlBack\nFull Marks\n80 ,r\nf ,errel\nBE\n#2.----\n-Pass*I'arhr\n-P-+ograrnrne- -BGT----..--\n3 hrs.\nYear / Part'\nry/r\nTime\nArtificial Intelli\n,/ Candidates are required to give their answers in their own words as far.as practicable.\n,/ Att'empt 1!!!questions,..' \n-\n,/ All questtons carry equal marks.\n- \nbg'\n1. What do.you mean,{lata dryiven rqasoning? How can you relate with chaining?\nExplain it with practical Gxamples.'\n2. Is Turing test important in the artificial intelligence? Explain it with suitable\ndiagram and examples.\n3. What is a first ordei predicate logic? How do you convert it to tbe disjunctive\n4. *The. Department of Electronics and Computer bngineering offers two\n'undergraduate 'degreei, Computer Engineering and Electronics and\nCommunication Engineeriug.\nthose courses are similan If the\nstudents of auy of\nyear more can-bs eligible \"-\nto get both degrees. OnIy\nComputer, Electronics 4nd\nsentences in Iirst-order predicate logic and explain each step.\n5..\n6.\nJustify that informed seaich is the modification of blinaf search. Explain in detail\naboutsimuIatedannealingwithpractica!e11mpIts..:.,...\n:\nDifferentiate between supervised and .unsupelised learning. .Explaiu about\nIearnin g framework with suitable block dia grap. and .examples.\n7. \\ilhat is a Boltzmann machineit Explain its algoritUrir witl suitable'explanation\ndnd example. \n;\n8. What do you Eean by.hetro-associative. structure? Explain it with suitable\nexample and its limitation!\n9. Cornpare expert iystems and human experts. Explain each'point with suitable\npraetical examples.\n10. Justify that natural language processing is one of the important part of an\nartificial intelligence. Explain the steps involvid in the natufal 'language\n:i\n\n33 ' \n'rrugnuvnN uvtvr.Rsrry\nINSTITUTE OF ENGiNEERING .\nIix anrinatiou C on tr-ol f) ivisio n\n2055 Bhadra\nlixaur.\nIlesrtlar / Back\nLcvcl\nBIl\nBCT'\nFull Mark.s\nI'rogra rnrne\nPas.s l\\'[arks\n3Z\nYc:rr / f'nrt\niv/t\nTinre\n3 lrrs.\n;\nSu.h\n: - Artificial hrtelli\ne\n'/ Candidates are required to give their ansrvers in their own woftIf66fir as practicable.\n/ . Attempt Atl questions-\n/ Att qiui;ui car'4t squa! marlcs.\n/ \nAssume suirabtc tu,; i;;;;;;;,,y.\n1. What do you mean by forwarrl chainiirg? Why it is required? Explaiu it with two practical\nex-ainples.\n2. Justify thati'sybtem tliat think rationaily'' ard \"system that act rationally\" are the part of\nartificial intelligence. Explain it with practical examples. .. :\n3. How do you convert to cbnjugate nomral fomr? Explain all tlie steps lvith suitable\n.praOtical examples.\n4. \"A deductive system is souncl if anl fohriula that can bq derived in the system ib logically\nvalid. Couversely, a deductive system is complete if every logically valid formula'is\nderivable. All of the syitem's discussed in this a*icle are both soun-d. and complete. They\nalso thare the property .that it is possible to effectively verify that.a purportedly valid\ndeduction is actually a $eduction; such deduction systems are palled effective\". Represent\nthe above sentences in first-oider logii and explain each step.\n5. Justiff that AI can't exist without searching. Explain in detail abbut'any two types of\n' \ninforrned search with practical examples \n. ..\n6. Why, do we require tearning? Explain about learning framework with suitable block\ndiagram dnd examples.\n7. How a genetic idba can be converfed to an algorithm? Explain ali'steps of genctic\nE. V/hat is a Hopfield Network? Explain all the steps'irwotved in tire Hop'frelcl Netrvork wit\"tr\nsuitable example. Compare it withK6honen Network. .:.\n9. Why go we require e1per1 system structure? Drarv the btock diagrirn and explain it with\n' praqlical exar.nples. ' \n.\n10. Explain the different steps involved in the 'naturat language processing (NLP) rvith\nsuitable block diagram and examples.\n* *'*\n: -ii \"-.. _... ^,.-\n. . TRiBHUV.C'NUN-IVERSITY\nINSTITUTE O r' EI{C IN l-:::,FL llrl( j\nExarnination Control Division\n2065 Shrarran\nE.ram.\nLevei\nProgramme\nBCT\nPass Marks\nYear / Part\nN/i\nTime\n3 hrs.\nBE\nFuli lllarks\n' \n,Srbjecr: -,Artificial Intelligbnce\n/ \nCandiditis are required Ede. their answers in their owrr rvords as far as practicabltr- . ',.\n'/ At:tempt 4!Iuesttotts.\n./ 4!!questtons carty equal marlcs.\n./ Tti*\" suttable data- if necessary.\n1. Define qnd differentiate betrveen \"system that thinkrationally\" And \"system that ,\nact.rationally'i'. AI research is.ethical justify it.\nWhy conjunctive normal form is required? Explai4 all the steps with suitable ,\n'qAll 'married ren:ployees earning'Rs. l'40,000'or..'mcrre,per yefl.r in'Neps! Fili,\ntaxes. All unmairibd employees earning Rs. 115,000 or more per year in Nepal'\npfty'taxes. The president of Nepal earnsRs.2,500,000 and has to pay rnaximum\n.io*.r. No other employee €arns more than the president. Some of. Neprilese.\ncitizens earn-iess that Its. 100 per day.and they don't\"have to pay agy.t*xes\".\nRepresent the above sentences in first-order logic and explain each step.\n:\nBiiefly exptain different fypes of practical expert.systems. Eiplain in detail\nabout any one practical expert system used in the medical application.' '\n5. Justify that AI can't exist withoirt searching. Exp.lain in :detail about hill\nclimbiqg.iearching and compare it rvith simulated nnnealing met[rod,\n6. Explain different factors involved in the learning? Explain in Uetail about ID3\n7. What is a genetic.algorithm ancl expiain its irnportance? Eiplain the steps\n' involved in the geneiic algorithm.\n8. .Compare. betrveen computer and nrain. Differentiate bgfween'rup\",rised and\n. utrsuperviised learning rvith sriitable example.\n9. fs an expert system important, justiiy it.. Explain in detail about .forward\nch*ining rvith suitable exampie\n.. \n.... \n. \n,\n10. !Yhy you hav'e to study naturat language processing? Erplain the issues in the\nnatural Ianguage processing.\n,\nTRIBHWAN irrurvenstry\nINSTITUTE OF ENGII{EERING\nExamination Control Division\n. 2065 Kartik\nExam.\nLevel\nBE\nFuIl Marks\n'Programme\nBCT\nPass Marks\nYear lPart\nTV/l\nTime\n3 hrs.\nSubiect: - Artificial lntelligence\n'/ Candidates are reQuireg$;grve ttreir answers in their own.woids as'far aspracticable.\n'/ A.xempt All questtotts.-\n( AA questionsbarry3qual marlcs.\n,/ Assume suitable data tf necessary.\n1. Define an artificial intelligence (AD. Explain the behaviors of the AI. What do you mean\nby Turing test? Explain it. :\n2. Why disjunctive normal form is required? Explain all the steps with suitable practical\nexarrples.\n3. \"A person bom in Nepdl, and whose parents is a Nepali citizen by birtlU is a Nepali\n. citizen,,p;,.,hir-th,,A person born outside Nepal, and one gf wlrgsg-parents is a Nepali\ncitizen by birth, is a NeBali citize,lr by descent. Several developed countries have dual\ncitizenship provision, Uut.Nppal.doesn't have .that.provisiof. Represent the above\nsente,nces in first-order logic and explain each step.: \n:\n4. Differentiate between inference and reasoning. Why probabilistic reasoning is important\nin the AI? Explainwith suitable example\n5. Justifli that searching is on'e of the irirpbrtant part of AI. Explain in detail about depth first\nsearch and breadth first search techniques with suitable example\n6. Define leaming. Why leaming fraure work is required? Explain about leaming frarne\nwork with suitable block diagram and examples.\n7. What is a genetic algorithm? Explain its applications. Explain all steps of GA in brief.\n8.. What is a back propagqtion? Explain all the steps involved in the.back propagation with\nsuitable exarnple. \n'\ng. How can you construct expert system? Explain knowledge engineering with suitable\nblock diagram.\n10. Define a natural language processing. Explain the different issues involved in the natural\nlanguage processing. \n.\n,h {.*\n,\n\n1'\n31 . \nTRIBHUVAN TINIYTRSIry\nINSTITTJTE OF ENGINEERING\nExamination Control Division\n- \n2064 ,festha\nExam.\nLevel\nBE\nFnIl Marks\nPass Mar'ks\nProgramme\nBCT\nYear lPart\nrv/I\nIlme \n, \n.\n3 hrs.\n- Artificial\n,/ Assunte suitable data if necessary.\n). List aII categories of artificiat intelligence and explain -them with suitable\n. \ntx4mples.'\ni2. . Why conversion to clausal form is required? Explain all the steps with suitable .\neiamples\n3. .Justify that &h[YCIt{\" is a probabililstic reasoning with derivationsand exrmple\n. : .:\n,4., Explain fho importance of searching. Erptaia in detail abqut any two inforeed\n' search'techniques with suitable example.\n5. What is aT inductive leamirig? Why learning frame is required? f,'*plail with\n. iuitable block diegram apd examples. \n.\n::\n6.\n.7.\nExplain about s-emantic networks and frames with suitable eramples.\n,\nDefine'a'genetic algorithm and explain its importanc,e. E:plain differgnt steps of\ngeiretic alggrithm in brief. \n. '; \n, i': \n:\n.l\n8. 'Exptain how brain works; Erplaih the mithematical' representation of:qeural\n, network system along with irc algorithmr \n.' .\n9, {e{ng an ex_pert system. I}ifferentiate betweeh forward chaining and baclrward\n_ chaining.with suitable examples.\n10. Why natural language processing is required?.E:plain thd issues'in information\n.. ettriction, information retrieyal and . rnachine translation in the natural\n'. language processing",
+  "method": "PyMuPDF (fast)",
+  "structured_data": {
+    "multi_year": true,
+    "questions": [
+      {
+        "number": 1,
+        "text": "Define AI. what is the importance of Tuming Test in AI? List applications of AI.",
+        "marks": "[8]",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 2,
+        "text": "what is problem space? Solve the following crypto arithmetic problem by showing all the steps.",
+        "marks": "[2+6]",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 3,
+        "text": "Discuss the hill climbing search algorithm along with problem associated with it and discuss their solutions. Why simulated annealing is important?",
+        "marks": "16+21",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 4,
+        "text": "Given premises “Every American who sells weapons to hostile nations is a criminal. The country xYZ is enemy of America. All of its misallies in XyZ were sold by Donald who is an American.” Prove that Donald is a criminal by using FopL based ,roiotioo refutation method.",
+        "marks": "I8l",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 5,
+        "text": "why _cNF is required? Explain all the steps used to convert a quantified statem€Nrt with suitable example [2+6]",
+        "marks": "[2+6]",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 6,
+        "text": "Why semantic network and frames are important in AI? Provide exzuxrples of both with FOPL statements exermple.",
+        "marks": "",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 7,
+        "text": "What is a genetic algorithm? Explain all the steps in genetic algorithm with block diagram and operators.",
+        "marks": "",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 8,
+        "text": "List the importance of expert system in real life. Draw block diagram of expert system architecture and explain all blocks.",
+        "marks": "[2+6]",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 9,
+        "text": "What is a McCulloch/Pitts neural network? Explain it with reference to AND gate. Justiff that it cannot be applied to Excrusive oR gate.",
+        "marks": "(4+4)",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 10,
+        "text": "Justiff that NLP is one of the important part of an AI. Explain the steps involved in the NLP.",
+        "marks": "[2+6]",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 11,
+        "text": "What is a rational agent? “Syslem that think like humans” and “System that act like humans” are the part of artificial intelligence. Justiff these statement with practical example.",
+        "marks": "[1+6]",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 12,
+        "text": "Define constraint satisfaction problem (CSP). Solve the following crypto-arithmetic problem, where different letters denote different integers and identical letters denote sarne integer. SWIM + WEAR = RELAX.",
+        "marks": "[1+6]",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 13,
+        "text": "Why Searching is important in problem solving? what do the drawbacks of greedy besF first search and how A* search algorithm solve it",
+        "marks": "12+71",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 14,
+        "text": "a) Assume the following facts: . John likes all kinds of food, . Apples are food. Chicken is food. Anything anyone eats and isn't killed by is food.",
+        "marks": "[2+6]",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 15,
+        "text": "b) Differentiate between forward and backward chaining.",
+        "marks": "",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 16,
+        "text": "What is Frame? How is it different from semantic net in knoWledge representation?",
+        "marks": "[4+4]",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 17,
+        "text": "Define inductive Learning. Explain in detail about ID3 process with suitable example.",
+        "marks": "12+61",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 18,
+        "text": "What is self-organizing Map (SOM)? Explain all the steps involved in SOM with suitable example.",
+        "marks": "[2+51]",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 19,
+        "text": "Justify that the study of gene is one of important part in the AI. List down the steps involved in genetic algorithm with an example.",
+        "marks": "[4+41]",
+        "has_subparts": false,
+        "year": "2075"
+      },
+      {
+        "number": 20,
+        "text": "How knowledge acquisition is performed in expert system? Explain one real expert system exaryrple with proper architecture.",
+        "marks": "[2+5]",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 21,
+        "text": "Write short notes on: i) Machine Vision ii) Supervised Vs Unsupervised learning",
+        "marks": "[12x4l]",
+        "has_subparts": true,
+        "year": "2075"
+      },
+      {
+        "number": 1,
+        "text": "If the Turing Test is passed, does this show that computers exhibit intelligence? State your reasons.",
+        "marks": 8,
+        "has_subparts": false,
+        "year": "2073"
+      },
+      {
+        "number": 2,
+        "text": "Solve the following puzzle by assigning numeral (0-9) in such a way that each letter is assigned unique digit which satisfu the following addition. ONE + ONE + TWO: FOUR",
+        "marks": "[4+5]",
+        "has_subparts": false,
+        "year": "2073"
+      },
+      {
+        "number": 3,
+        "text": "Explain the necessity of searching techniques in AI? Differentiate between Breath first search and Depth first search with their performance criteria.",
+        "marks": "[4+5]",
+        "has_subparts": true,
+        "year": "2073"
+      },
+      {
+        "number": 4,
+        "text": "Assume the following facts: D Horses, cows, pigs are mammals ii) An offsprittg of a horse is a horse iii) Bluebeard is a horse iv) Bluebeard is Charlie's parent v) Offspring and parent are inverse relations vi) Every mammal has a parent",
+        "marks": "(4+4)",
+        "has_subparts": false,
+        "year": "2073"
+      },
+      {
+        "number": 5,
+        "text": "Prove Charlie is a horse using resolution refutation.",
+        "marks": "[8]",
+        "has_subparts": false,
+        "year": "2073"
+      },
+      {
+        "number": 6,
+        "text": "What is causal net? How does Bayes Theorem calculate the probability in a causal net?",
+        "marks": "[4+4]",
+        "has_subparts": true,
+        "year": "2073"
+      },
+      {
+        "number": 7,
+        "text": "Convert given sentences into Semantic Network. i) The height of the adult male is 5.10",
+        "marks": "[4+4]",
+        "has_subparts": false,
+        "year": "2073"
+      },
+      {
+        "number": 8,
+        "text": "Explain with example calculation.",
+        "marks": "[4+4]",
+        "has_subparts": true,
+        "year": "2073"
+      },
+      {
+        "number": 9,
+        "text": "Write short notes on: i) Predicate logic ii) Unsupervised learning",
+        "marks": "[12]",
+        "has_subparts": true,
+        "year": "2073"
+      },
+      {
+        "number": 10,
+        "text": "What are applications of Expert System? Describe the Development stages of Expert System briefly.",
+        "marks": "[8]",
+        "has_subparts": false,
+        "year": "2073"
+      },
+      {
+        "number": 11,
+        "text": "Define a NLU and a NLG. List down the different steps involved in the natural language processing (NLP) with suitable examples.",
+        "marks": "[2+6]",
+        "has_subparts": true,
+        "year": "2073"
+      },
+      {
+        "number": 12,
+        "text": "What are applications of Expert System?",
+        "marks": "[4+4]",
+        "has_subparts": false,
+        "year": "2073"
+      },
+      {
+        "number": 13,
+        "text": "Define Hebbian learning. Use Hebbian learning algorithm to Construct Hebbian Network which perform line AND Function.",
+        "marks": "[8]",
+        "has_subparts": true,
+        "year": "2073"
+      },
+      {
+        "number": 1,
+        "text": "What is an Artificial Intelligence (Al)? Expiain any two applications of Al in real field.",
+        "marks": 8,
+        "has_subparts": false,
+        "year": "2072"
+      },
+      {
+        "number": 2,
+        "text": "What do you wrderstand by Constraint satisfaction problem? Solve the following Cryptarithmetic prcblem. [1+6] SEND + MoRE MONEY",
+        "marks": "[1+6]",
+        "has_subparts": true,
+        "year": "2072"
+      },
+      {
+        "number": 3,
+        "text": "What is a searching? Explain Breadth First Search and Depth First Search and compare their performance criteria.",
+        "marks": "(4+4)",
+        "has_subparts": false,
+        "year": "2072"
+      },
+      {
+        "number": 4,
+        "text": "What is a knowledge, representation and reasoning? Describe forward chaining with practical exaurple.",
+        "marks": "[2+5]",
+        "has_subparts": false,
+        "year": "2072"
+      },
+      {
+        "number": 5,
+        "text": "Assume the following facts: - tA . John likes all kinds of food. . APPles are food. r Chicken is food. o Anything anyone eats and isn't killed by is food. r Bill eats peanuts and is still alive. o Sue eats everything Bill eats. Prove that John likes peanuts using resolution refutation",
+        "marks": "[2+5]",
+        "has_subparts": true,
+        "year": "2072"
+      },
+      {
+        "number": 6,
+        "text": "What are semantic nets and frames? How frames are useful in semantic nets.",
+        "marks": "12",
+        "has_subparts": false,
+        "year": "2072"
+      },
+      {
+        "number": 7,
+        "text": "What is a machine learning? Explain in detail about Boltzmann machines with suitabte algorithm and explanations.",
+        "marks": "[2+8]",
+        "has_subparts": false,
+        "year": "2072"
+      },
+      {
+        "number": 8,
+        "text": "What is a neural network? Explain the back propagation algorithms and perceptron. 12+4+41",
+        "marks": "(4+4)",
+        "has_subparts": true,
+        "year": "2072"
+      },
+      {
+        "number": 9,
+        "text": "What is an expert system? Explain its advantages and disadvantages.",
+        "marks": "12",
+        "has_subparts": false,
+        "year": "2072"
+      },
+      {
+        "number": 10,
+        "text": "What is a Nahual Language Processing? Describe Natural Language Processing Steps and its application.",
+        "marks": "[2+8]",
+        "has_subparts": true,
+        "year": "2072"
+      },
+      {
+        "number": 2,
+        "text": "Solve the following crypto-arithmetic problem, where different letters denote different",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 3,
+        "text": "Differentiate between informed and blind search. How depth search is different to breadth",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 4,
+        "text": "All oversmart persons are stupid. Children of oversmart presons are naughty. Ram is",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 5,
+        "text": "Explain the step involved in conjunctive normal form (CNF) with suitable example.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 6,
+        "text": "What is semantic net? Explain with suitable example.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 7,
+        "text": "What is machine vision? Discuss about the algorithm of Genetic Algorithm.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 8,
+        "text": "What is neural network? Explain back-propagation algorithm learning.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 9,
+        "text": "What is an Expert System? Explain the steps of an Expert System development.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 10,
+        "text": "Define machine translation in NLP. Explain the challenges of machine translation.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 0,
+        "text": "3. Discuss the hilFclimbing search algorithm along with problems associated with it and discuss their",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 1,
+        "text": "Discuss any two fields of your daily life'where art?ficiel irnelligence has been applied.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 4,
+        "text": "Given premises: Every'American who sells weapons to hostile nations is a criminal. The countryAbc",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 6,
+        "text": "What is Fuzzy tearning? Exptain with a practical examfle.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 7,
+        "text": "Explain the learning framework with suitable example.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 8,
+        "text": "What is a Hopfield Network? Explain all the steps involved in the Hopfield Network with suitable",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 10,
+        "text": "What is a natural language processing? Explain it.",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2070"
+      },
+      {
+        "number": 11,
+        "text": "Write short notes: (anY two)",
+        "marks": null,
+        "has_subparts": true,
+        "year": "2070"
+      },
+      {
+        "number": 1,
+        "text": "What do.you mean,{lata dryiven rqasoning? How can you relate with chaining?",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2068"
+      },
+      {
+        "number": 2,
+        "text": "How can you convort to coniunctive normal foru? Explain all the stepr with",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2068"
+      },
+      {
+        "number": 3,
+        "text": "CAII mrrried employeer earning Rs. 2251000 or more per yoff in Nepel pey",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2068"
+      },
+      {
+        "number": 4,
+        "text": "Drrw thc block dtagram of the stnrcturc of an expert syctem and oxphin it. How",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2068"
+      },
+      {
+        "number": 5,
+        "text": "lVhat ir o depth first seorch? Explain it with rcquined algorithm. IIow crtr you",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2068"
+      },
+      {
+        "number": 6,
+        "text": "Explain in detail about II)3 process with suitable exampla Explain dlfrerent",
+        "marks": null,
+        "has_subparts": true,
+        "year": "2068"
+      },
+      {
+        "number": 7,
+        "text": "lVhat is a ftrzzy logic and explain its importance? Erplain the steps involved in",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2068"
+      },
+      {
+        "number": 8,
+        "text": "\\ilhat ir a MeCulloch/Pittg neural network? Explain it with rcferrcnce to AND",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2068"
+      },
+      {
+        "number": 9,
+        "text": "Explrin in detail about forrerd cheining with suitable erample. lVhet are the",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2068"
+      },
+      {
+        "number": 10,
+        "text": "Explrin the importances of neturel language processing. Whet are the iscues fur",
+        "marks": null,
+        "has_subparts": false,
+        "year": "2068"
+      }
+    ]
+  },
+  "timestamp": "2026-02-09T00:53:02.861826"
+}
