@@ -15,21 +15,18 @@ PROJECT_ROOT = BASE_DIR.parent                  # project-root/
 # Load both .env files (if they exist)
 load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
 load_dotenv(dotenv_path=BASE_DIR / ".env")
+print("Loading env from:", PROJECT_ROOT / ".env")
+print("Loading env from:", BASE_DIR / ".env")
 
 
 class Config:
     """Application configuration."""
 
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-
-    DB_PATH = os.path.join(os.path.dirname(__file__), "database.db")
-
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
-
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback-secret-key")
+    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database.db")
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
     DEBUG = True
-
-
     # ===== ONLY CHANGED THESE 5 LINES =====
     # Change from BACKEND_DIR to PROJECT_ROOT for datasets
     DATASETS_DIR = PROJECT_ROOT / "datasets"
