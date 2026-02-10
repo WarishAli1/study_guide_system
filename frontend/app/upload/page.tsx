@@ -24,12 +24,12 @@ export default function UploadPage() {
 
     return (
         <div className="max-w-6xl mx-auto px-6 py-10">
-            {/* heading */}
             <div className="mb-10">
                 <h1 className="text-3xl font-bold text-gray-900">Upload Documents</h1>
                 <p className="text-gray-500 mt-2 max-w-2xl">
                     Upload your course materials to generate a personalised study guide.
-                    We accept <strong>PDF</strong> files for each category below.
+                    We accept <strong>PDF</strong> and <strong>image</strong> files
+                    (PNG, JPG) for each category below.
                 </p>
             </div>
 
@@ -37,21 +37,22 @@ export default function UploadPage() {
                 <FileUploadCard
                     title="Syllabus"
                     description="Course syllabus with units & topics"
-                    type="syllabus"
+                    docType="syllabus"
                     icon={<BookText className="w-5 h-5 text-blue-600" />}
                     accentColor="bg-blue-100"
                 />
                 <FileUploadCard
                     title="Course Notes"
                     description="Lecture notes & study materials"
-                    type="note"
+                    docType="notes"
                     icon={<FileText className="w-5 h-5 text-emerald-600" />}
                     accentColor="bg-emerald-100"
                 />
                 <FileUploadCard
                     title="Past Questions"
                     description="Previous year exam papers"
-                    type="past_paper"
+                    docType="past_paper"
+                    requiresYear
                     icon={<ClipboardList className="w-5 h-5 text-amber-600" />}
                     accentColor="bg-amber-100"
                 />
