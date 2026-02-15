@@ -22,13 +22,33 @@ export const authAPI = {
 };
 
 export const uploadAPI = {
-    uploadFile: (file: File, type: string) => {
+    uploadFile: (
+        file: File,
+        docType: string,
+        year?: number,
+        subject?: string
+    ) => {
         const formData = new FormData();
         formData.append("file", file);
-        return api.post(`/api/upload/?type=${encodeURIComponent(type)}`, formData, {
+        formData.append("doc_type", docType);
+        if (year !== undefined) formData.append("year", String(year));
+        if (subject) formData.append("subject", subject);
+
+        return api.post("/api/upload", formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
     },
+
+    listUploads: (docType?: string) => {
+        const params = docType ? { doc_type: docType } : {};
+        return api.get("/api/uploads", { params });
+    },
+
+    getUpload: (id: number) => api.get(`/api/uploads/${id}`),
+
+    getExtractedText: (id: number) => api.get(`/api/uploads/${id}/text`),
+
+    deleteUpload: (id: number) => api.delete(`/api/uploads/${id}`),
 };
 
 export default api;

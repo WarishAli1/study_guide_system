@@ -1,44 +1,19 @@
-# Study Assistant Backend - Optimized Requirements
-# Fast + Quality balance
-
-# ===== Core Backend =====
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-python-multipart==0.0.12
-python-dotenv==1.0.1
-
-# ===== Authentication =====
-google-auth==2.35.0
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-
-# ===== PDF Processing - HYBRID APPROACH =====
-# PyMuPDF for fast extraction (10-40x faster)
-PyMuPDF==1.24.14
-
-# Marker for high-quality fallback (when needed)
-marker-pdf[full]==1.10.2
-Pillow==10.4.0
-
-# ===== LLM Integration =====
-ollama==0.4.4
-
-# ===== Document Processing =====
-python-docx==1.1.2
-python-pptx==1.0.2
-
-# ===== Machine Learning & NLP =====
-torch==2.7.0
-numpy==1.26.4
-scikit-learn==1.6.1
-sentence-transformers==3.3.1
-transformers==4.56.2
-huggingface-hub==0.35.0
-
-# ===== Keyword Extraction =====
-keybert==0.8.5
-yake==0.4.8
-
-# ===== Utilities =====
-python-dateutil==2.9.0
-requests==2.32.3
+fastapi
+uvicorn[standard]
+python-dotenv
+python-jose[cryptography]
+python-multipart
+pydantic
+google-auth
+google-auth-oauthlib
+scikit-learn
+numpy
+# Document extraction
+PyMuPDF
+Pillow
+pytesseract
+nltk
+KeyBERT
+torch
+openai
+sentence-transformers

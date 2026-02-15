@@ -31,14 +31,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    /** Shared helper — stores the token + user from any login response. */
+    const handleLoginResponse = (data: { token: string; user: User }) => {
+        setToken(data.token);
+        setUser(data.user);
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+    };
+
     const login = async (googleToken: string) => {
         const res = await authAPI.googleLogin(googleToken);
-        const { token: accessToken, user: userData } = res.data;
+        handleLoginResponse(res.data);
+    };
 
-        setToken(accessToken);
-        setUser(userData);
-        localStorage.setItem("token", accessToken);
-        localStorage.setItem("user", JSON.stringify(userData));
+    const devLogin = async () => {
+        const res = await authAPI.devLogin();
+        handleLoginResponse(res.data);
     };
 
     const logout = () => {
@@ -50,7 +58,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return (
         <AuthContext.Provider
-            value={{ user, token, isAuthenticated: !!token, isLoading, login, logout }}
+            value={{
+                user,
+                token,
+                isAuthenticated: !!token,
+                isLoading,
+                login,
+                devLogin,
+                logout,
+            }}
         >
             {children}
         </AuthContext.Provider>

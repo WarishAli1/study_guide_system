@@ -1,264 +1,379 @@
 """
-Updated Upload Handler for Marker + Ollama (Async)
-Handles async PDF extraction from new Marker API.
-
-Location: backend/upload/upload_file.py
+Upload routes – receive files, extract text, persist metadata, and process content.
 """
-
+import json
 import os
+import sqlite3
+import uuid
 import shutil
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+import logging
+import sys
 from typing import Optional
-from .file_processor import FileProcessorMarker
-from config import Config
-from data.background_processor import trigger_processing
 
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from config import Config
+from upload.file_processor import extract_text, save_raw_text
+from data.chapter_json import process_and_save_chapter
+from data.question_json import process_raw_and_questions
+from data.syllabus_json import process_raw_syllabus
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Initialize Marker+Ollama processor
-processor = FileProcessorMarker(ollama_model='llama3.2')
+# ── Constants ────────────────────────────────────────────────────────────────
 
-# Use Config paths
+DB_PATH = Config.DB_PATH
+UPLOAD_DIR = Config.UPLOAD_DIR
 RAW_TEXT_DIR = Config.RAW_TEXT_DIR
-TEMP_UPLOAD_FOLDER = Config.UPLOAD_FOLDER
 
-# Ensure directories exist
-os.makedirs(RAW_TEXT_DIR, exist_ok=True)
-os.makedirs(TEMP_UPLOAD_FOLDER, exist_ok=True)
+VALID_DOC_TYPES = {"syllabus", "notes", "past_paper"}
+VALID_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp", ".webp"}
 
 
-@router.post("/upload/")
-async def upload_file(  # ← Now async!
+# ── Database helpers ─────────────────────────────────────────────────────────
+
+def init_uploads_table() -> None:
+    """Create the uploads table if it doesn't already exist."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS uploads (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            original_filename TEXT NOT NULL,
+            stored_filename   TEXT NOT NULL,
+            doc_type          TEXT NOT NULL,
+            year              INTEGER,
+            subject           TEXT,
+            file_path         TEXT NOT NULL,
+            text_path         TEXT,
+            page_count        INTEGER,
+            ocr_used          INTEGER DEFAULT 0,
+            ocr_pages         TEXT DEFAULT '[]',
+            extraction_method TEXT,
+            status            TEXT DEFAULT 'processing',
+            created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def _insert_upload(record: dict) -> int:
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.execute(
+        """
+        INSERT INTO uploads
+            (original_filename, stored_filename, doc_type, year, subject,
+             file_path, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            record["original_filename"],
+            record["stored_filename"],
+            record["doc_type"],
+            record.get("year"),
+            record.get("subject"),
+            record["file_path"],
+            "processing",
+        ),
+    )
+    conn.commit()
+    upload_id = cur.lastrowid
+    conn.close()
+    return upload_id
+
+
+def _update_upload(upload_id: int, fields: dict) -> None:
+    set_parts = ", ".join(f"{k} = ?" for k in fields)
+    values = list(fields.values()) + [upload_id]
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute(f"UPDATE uploads SET {set_parts} WHERE id = ?", values)
+    conn.commit()
+    conn.close()
+
+
+def _row_to_dict(row: tuple) -> dict:
+    """Map a full SELECT * row to a dict."""
+    keys = [
+        "id", "original_filename", "stored_filename", "doc_type",
+        "year", "subject", "file_path", "text_path", "page_count",
+        "ocr_used", "ocr_pages", "extraction_method", "status", "created_at",
+    ]
+    d = dict(zip(keys, row))
+    # Deserialise ocr_pages from JSON string.
+    try:
+        d["ocr_pages"] = json.loads(d["ocr_pages"]) if d["ocr_pages"] else []
+    except (json.JSONDecodeError, TypeError):
+        d["ocr_pages"] = []
+    d["ocr_used"] = bool(d["ocr_used"])
+    return d
+
+
+def _fetch_upload(upload_id: int) -> Optional[dict]:
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.execute("SELECT * FROM uploads WHERE id = ?", (upload_id,))
+    row = cur.fetchone()
+    conn.close()
+    return _row_to_dict(row) if row else None
+
+
+def _fetch_uploads(doc_type: Optional[str] = None) -> list[dict]:
+    conn = sqlite3.connect(DB_PATH)
+    if doc_type:
+        cur = conn.execute(
+            "SELECT * FROM uploads WHERE doc_type = ? ORDER BY created_at DESC",
+            (doc_type,),
+        )
+    else:
+        cur = conn.execute("SELECT * FROM uploads ORDER BY created_at DESC")
+    rows = cur.fetchall()
+    conn.close()
+    return [_row_to_dict(r) for r in rows]
+
+
+# ── Routes ───────────────────────────────────────────────────────────────────
+
+@router.post("/upload")
+async def upload_file(
     file: UploadFile = File(...),
-    subject: str = Form(...),
-    file_type: str = Form(...),
-    uploaded_by: str = Form(default="student123")
+    doc_type: str = Form(...),
+    year: Optional[int] = Form(None),
+    subject: Optional[str] = Form(None),
 ):
     """
-    Upload and process study material (PDF, DOCX, PPTX).
-    Uses Marker + Ollama for accurate PDF extraction and structuring.
+    Upload a PDF or image file for text extraction and processing.
+
+    Form fields
+    -----------
+    file     : the document (PDF, PNG, JPG …)
+    doc_type : one of  syllabus | notes | past_paper
+    year     : (required for past_paper) e.g. 2023
+    subject  : REQUIRED - subject name (e.g., "Artificial Intelligence", "CN")
     """
-    try:
-        # Validate file extension
-        file_ext = os.path.splitext(file.filename)[1].lower()
-        if file_ext not in processor.supported_formats:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Unsupported file format. Supported: {', '.join(processor.supported_formats)}"
-            )
-        
-        # Check file size
-        file.file.seek(0, 2)
-        file_size = file.file.tell()
-        file.file.seek(0)
-        
-        if file_size > Config.MAX_UPLOAD_SIZE:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File too large. Maximum size: {Config.MAX_UPLOAD_SIZE / (1024*1024)}MB"
-            )
-        
-        # Validate file_type
-        valid_types = ["notes", "note", "syllabus", "question_paper", "question", "questions", "qp"]
-        if file_type.lower() not in valid_types:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file_type. Use: notes, syllabus, or question_paper"
-            )
-        
-        # Save uploaded file temporarily
-        import uuid
-        temp_filename = f"{uuid.uuid4()}_{file.filename}"
-        temp_file_path = os.path.join(TEMP_UPLOAD_FOLDER, temp_filename)
-        
-        with open(temp_file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        print(f"✓ File saved temporarily: {temp_file_path}")
-        
-        # Get file statistics
-        file_stats = processor.get_file_stats(temp_file_path)
-        
-        # Extract text from file (ASYNC CALL for Marker)
-        print(f"\nProcessing {file.filename}...")
-        raw_text, extraction_method, structured_data = await processor.extract_text(
-            temp_file_path,
-            file_type=file_type
+    # ── validate inputs ──────────────────────────────────────────────────
+    if doc_type not in VALID_DOC_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"doc_type must be one of: {', '.join(sorted(VALID_DOC_TYPES))}",
         )
-        
-        if not raw_text or len(raw_text.strip()) < Config.MIN_TEXT_LENGTH:
-            # Clean up temp file
-            os.remove(temp_file_path)
-            raise HTTPException(
-                status_code=400,
-                detail="Could not extract meaningful text from file. File might be corrupted or empty."
-            )
-        
-        # Create organized folder structure
-        output_dir = processor.create_folder_structure(
-            base_dir=str(RAW_TEXT_DIR),
-            subject=subject,
-            file_type=file_type
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in VALID_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{ext}'. Allowed: {', '.join(sorted(VALID_EXTENSIONS))}",
         )
-        
-        # Save as JSON with metadata (including Ollama-structured data)
-        json_path = processor.save_as_json(
-            raw_text=raw_text,
-            filename=file.filename,
-            file_type=file_type,
-            subject=subject.upper(),
-            uploaded_by=uploaded_by,
-            output_dir=output_dir,
-            structured_data=structured_data  # From Ollama
+
+    if doc_type == "past_paper" and year is None:
+        raise HTTPException(
+            status_code=400,
+            detail="'year' is required when doc_type is past_paper.",
         )
-        
-        # Remove temporary uploaded file
-        os.remove(temp_file_path)
-        print(f"✓ Removed temporary file: {temp_file_path}")
-        
-        # Trigger background processing
-        try:
-            trigger_processing(subject.upper())
-            print(f"✓ Triggered background processing for {subject.upper()}")
-        except Exception as bg_error:
-            print(f"⚠️  Background processing trigger failed: {bg_error}")
-        
-        # Prepare response
-        return {
-            "status": "success",
-            "message": "File processed successfully",
-            "data": {
-                "filename": file.filename,
-                "subject": subject.upper(),
-                "file_type": file_type,
-                "uploaded_by": uploaded_by,
-                "extraction_method": extraction_method,
-                "json_path": json_path,
-                "storage_location": output_dir,
-                "has_structured_data": structured_data is not None,
-                "statistics": {
-                    "character_count": len(raw_text),
-                    "word_count": len(raw_text.split()),
-                    "file_size_mb": file_stats["size_mb"]
-                }
-            }
-        }
     
-    except HTTPException:
-        raise
-    except Exception as e:
-        # Clean up temp file if it exists
-        if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
-        
-        print(f"✗ Error processing file: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    if not subject:
+        raise HTTPException(
+            status_code=400,
+            detail="'subject' is required.",
+        )
 
+    # ── persist the original file TEMPORARILY ────────────────────────────
+    uid = uuid.uuid4().hex[:8]
+    stored_filename = f"{uid}_{file.filename}"
+    type_upload_dir = os.path.join(UPLOAD_DIR, doc_type)
+    os.makedirs(type_upload_dir, exist_ok=True)
+    file_path = os.path.join(type_upload_dir, stored_filename)
 
-@router.get("/files/{subject}")
-async def list_subject_files(subject: str, file_type: Optional[str] = None):
-    """List all uploaded files for a subject."""
     try:
-        subject = subject.upper()
-        subject_dir = os.path.join(str(RAW_TEXT_DIR), subject)
-        
-        if not os.path.exists(subject_dir):
-            return {
-                "status": "success",
-                "subject": subject,
-                "files": [],
-                "message": "No files found for this subject"
-            }
-        
-        files_data = []
-        
-        # Determine which directories to scan
-        if file_type:
-            normalized_type = Config.FILE_TYPE_MAP.get(file_type.lower(), file_type)
-            scan_dirs = [normalized_type]
-        else:
-            scan_dirs = ["notes", "syllabus", "questions"]
-        
-        # Scan directories for JSON files
-        for dir_name in scan_dirs:
-            dir_path = os.path.join(subject_dir, dir_name)
-            if os.path.exists(dir_path):
-                for filename in os.listdir(dir_path):
-                    if filename.endswith('.json'):
-                        json_path = os.path.join(dir_path, filename)
-                        try:
-                            with open(json_path, 'r', encoding='utf-8') as f:
-                                import json
-                                metadata = json.load(f)
-                                # Don't include raw_text in listing
-                                metadata_summary = {k: v for k, v in metadata.items() if k != 'raw_text'}
-                                metadata_summary['json_path'] = json_path
-                                metadata_summary['has_structured_data'] = 'structured_data' in metadata
-                                files_data.append(metadata_summary)
-                        except Exception as e:
-                            print(f"Error reading {json_path}: {e}")
-                            continue
-        
-        return {
-            "status": "success",
+        with open(file_path, "wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {exc}")
+
+    # ── create a tracking record (status = processing) ───────────────────
+    upload_id = _insert_upload(
+        {
+            "original_filename": file.filename,
+            "stored_filename": stored_filename,
+            "doc_type": doc_type,
+            "year": year,
             "subject": subject,
-            "total_files": len(files_data),
-            "files": sorted(files_data, key=lambda x: x.get('upload_time', ''), reverse=True)
+            "file_path": file_path,
         }
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    )
 
-
-@router.get("/file/{subject}/{file_type}/{filename}")
-async def get_file_content(subject: str, file_type: str, filename: str):
-    """Get the full content of a specific file."""
+    # ── extract text ─────────────────────────────────────────────────────
     try:
-        import json
-        subject = subject.upper()
-        normalized_type = Config.FILE_TYPE_MAP.get(file_type.lower(), file_type)
-        
-        json_path = os.path.join(str(RAW_TEXT_DIR), subject, normalized_type, filename)
-        
-        if not os.path.exists(json_path):
-            raise HTTPException(status_code=404, detail="File not found")
-        
-        with open(json_path, 'r', encoding='utf-8') as f:
-            content = json.load(f)
-        
-        return {
-            "status": "success",
-            "data": content
-        }
+        result = extract_text(file_path)
+    except RuntimeError as exc:
+        _update_upload(upload_id, {"status": "failed"})
+        # Delete temp file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        _update_upload(upload_id, {"status": "failed"})
+        logger.exception("Extraction failed for upload %s", upload_id)
+        # Delete temp file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(status_code=500, detail=f"Text extraction failed: {exc}")
+
+    if not result["text"].strip():
+        _update_upload(upload_id, {"status": "failed"})
+        # Delete temp file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(
+            status_code=400,
+            detail="No text could be extracted from the uploaded file.",
+        )
+
+    # ── save extracted text with NEW structure ───────────────────────────
+    # New path: datasets/raw_text/{subject_name}/{type}/
+    subject_slug = subject.replace(" ", "_").lower()
+    type_text_dir = os.path.join(RAW_TEXT_DIR, subject_slug, doc_type)
+    text_path = save_raw_text(result["text"], stored_filename, type_text_dir)
+
+    # ── process content based on doc_type ────────────────────────────────
+    processing_result = {}
     
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.delete("/file/{subject}/{file_type}/{filename}")
-async def delete_file(subject: str, file_type: str, filename: str):
-    """Delete a specific file."""
     try:
-        subject = subject.upper()
-        normalized_type = Config.FILE_TYPE_MAP.get(file_type.lower(), file_type)
-        
-        json_path = os.path.join(str(RAW_TEXT_DIR), subject, normalized_type, filename)
-        
-        if not os.path.exists(json_path):
-            raise HTTPException(status_code=404, detail="File not found")
-        
-        os.remove(json_path)
-        
-        return {
-            "status": "success",
-            "message": f"File {filename} deleted successfully"
-        }
-    
-    except HTTPException:
-        raise
+        if doc_type == "syllabus":
+            processing_result = process_raw_syllabus(subject, text_path)
+            logger.info(f"Syllabus processing result: {processing_result}")
+
+        elif doc_type == "notes":
+            processing_result = process_and_save_chapter(subject, text_path)
+            logger.info(f"Chapter processing result: {processing_result}")
+
+        elif doc_type == "past_paper":
+            process_raw_and_questions(subject, text_path)
+            processing_result = {
+                "success": True,
+                "message": "Past paper processed successfully."
+            }              
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Content processing failed for upload {upload_id}: {e}")
+        # Continue even if processing fails
+        processing_result = {'success': False, 'error': str(e)}
+
+    # ── finalise the tracking record ─────────────────────────────────────
+    _update_upload(
+        upload_id,
+        {
+            "text_path": text_path,
+            "page_count": result["page_count"],
+            "ocr_used": int(result["ocr_used"]),
+            "ocr_pages": json.dumps(result["ocr_pages"]),
+            "extraction_method": result["method"],
+            "status": "completed",
+        },
+    )
+
+    # ── DELETE temporary upload file ─────────────────────────────────────
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            logger.info(f"Deleted temporary upload file: {file_path}")
+    except Exception as e:
+        logger.warning(f"Failed to delete temporary file {file_path}: {e}")
+
+    # ── response ─────────────────────────────────────────────────────────
+    preview = result["text"][:500]
+    if len(result["text"]) > 500:
+        preview += " …"
+
+    response_data = {
+        "status": "success",
+        "upload_id": upload_id,
+        "filename": file.filename,
+        "doc_type": doc_type,
+        "year": year,
+        "subject": subject,
+        "page_count": result["page_count"],
+        "ocr_used": result["ocr_used"],
+        "ocr_pages": result["ocr_pages"],
+        "extraction_method": result["method"],
+        "text_preview": preview,
+        "text_path": text_path,
+        "processing": processing_result
+    }
+
+    return response_data
+
+
+@router.get("/uploads")
+async def list_uploads(doc_type: Optional[str] = None):
+    """
+    List all uploads, optionally filtered by doc_type.
+
+    Query params
+    ------------
+    doc_type : syllabus | notes | past_paper  (optional)
+    """
+    if doc_type and doc_type not in VALID_DOC_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"doc_type must be one of: {', '.join(sorted(VALID_DOC_TYPES))}",
+        )
+    return _fetch_uploads(doc_type)
+
+
+@router.get("/uploads/{upload_id}")
+async def get_upload(upload_id: int):
+    """Return metadata for a single upload."""
+    record = _fetch_upload(upload_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Upload not found.")
+    return record
+
+
+@router.get("/uploads/{upload_id}/text")
+async def get_extracted_text(upload_id: int):
+    """Return the full extracted text for an upload."""
+    record = _fetch_upload(upload_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Upload not found.")
+    if record["status"] != "completed":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Text not available. Upload status: {record['status']}",
+        )
+    text_path = record["text_path"]
+    if not text_path or not os.path.isfile(text_path):
+        raise HTTPException(status_code=404, detail="Extracted text file is missing.")
+
+    with open(text_path, "r", encoding="utf-8") as fh:
+        text = fh.read()
+
+    return {
+        "upload_id": upload_id,
+        "doc_type": record["doc_type"],
+        "filename": record["original_filename"],
+        "text": text,
+    }
+
+
+@router.delete("/uploads/{upload_id}")
+async def delete_upload(upload_id: int):
+    """Delete an upload and its associated files."""
+    record = _fetch_upload(upload_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Upload not found.")
+
+    # Remove the original file (if it still exists - it should be deleted already)
+    if record["file_path"] and os.path.isfile(record["file_path"]):
+        os.remove(record["file_path"])
+
+    # Remove the extracted text file
+    if record["text_path"] and os.path.isfile(record["text_path"]):
+        os.remove(record["text_path"])
+
+    # Remove the DB row
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("DELETE FROM uploads WHERE id = ?", (upload_id,))
+    conn.commit()
+    conn.close()
+
+    return {"status": "deleted", "upload_id": upload_id}

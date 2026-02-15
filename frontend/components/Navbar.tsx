@@ -19,13 +19,11 @@ export default function Navbar() {
     return (
         <nav className="bg-white border-b border-gray-200 px-6 py-3 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
-                {/* logo */}
                 <Link href="/upload" className="flex items-center gap-2">
                     <BookOpen className="w-6 h-6 text-indigo-600" />
                     <span className="text-xl font-bold text-gray-900">ExamGuide</span>
                 </Link>
 
-                {/* right side */}
                 <div className="flex items-center gap-6">
                     <Link
                         href="/upload"
