@@ -78,15 +78,8 @@ def split_by_year(text: str):
     return sections
 
 def clean_with_llm(year_text: str) -> str:
-    """
-    Clean text using Groq OpenAI-compatible client.
-    Throttled for llama-4-scout (30K TPM safe).
-    """
-
     max_retries = 5
-    base_delay = 5  # 5 sec delay between calls (safe for 2500 token jobs)
-
-    # Estimate safe output tokens (hard cap at 2000)
+    base_delay = 5
     estimated_tokens = int(len(year_text.split()) * 1.3)
     max_output = min(max(800, estimated_tokens), 2000)
 
@@ -100,7 +93,6 @@ def clean_with_llm(year_text: str) -> str:
                 max_output_tokens=max_output
             )
 
-            # Small throttle after success
             time.sleep(base_delay)
 
             return response.output_text.strip()
@@ -134,7 +126,6 @@ def extract_questions(cleaned_text):
     years = []
     marks = []
 
-    # Split by year header
     year_sections = re.split(r"(20[5-9]\d\s+[A-Za-z]{3,})", cleaned_text)
     if len(year_sections) < 2:
         return [], [], []
@@ -142,23 +133,19 @@ def extract_questions(cleaned_text):
     for i in range(1, len(year_sections), 2):
         year = year_sections[i].strip()
         section = year_sections[i+1].strip()
-        # Split questions by 1., 2., 3. or fallback to blank line if short
         lines = section.split("\n")
         q_text = ""
         for line in lines:
-            # Detect question number
             if re.match(r"^\d+\.", line.strip()):
                 if q_text:
-                    # Save previous question
                     questions.append(q_text.strip())
                     years.append(year)
-                    # Extract marks
                     m = re.findall(r"[\[\(\{](\d+)[\]\)\}]", q_text)
                     marks.append(int(m[0]) if m else None)
                 q_text = line.strip()
             elif len(line.strip()) > 20:
                 q_text += " " + line.strip()
-            elif len(line.strip()) <= 20 and q_text: # short line continuation
+            elif len(line.strip()) <= 20 and q_text:
                 q_text += " " + line.strip()
         if q_text:
             questions.append(q_text.strip())
@@ -227,13 +214,11 @@ def create_question_json(subject_name, questions, years, marks):
     os.makedirs(output_dir, exist_ok=True)
     save_path = os.path.join(output_dir, f"{subject_name}_questions.json")
 
-    # Step 1: Prepare new flat question list
     new_question_list = [
         {"question": q, "year": y, "mark": m}
         for q, y, m in zip(questions, years, marks)
     ]
 
-    # Step 2: If file exists, load old data and flatten it
     if os.path.exists(save_path):
         with open(save_path, "r", encoding="utf-8") as f:
             existing_clusters = json.load(f)
@@ -249,17 +234,14 @@ def create_question_json(subject_name, questions, years, marks):
                     "chapter_name": cluster["chapter_name"][i],
                 })
 
-        # Merge old + new
         question_list = old_flat_questions + new_question_list
     else:
         question_list = new_question_list
 
-    # Step 3: Assign chapters ONLY to new ones (optimization)
     assigned = assign_chapters_to_questions(subject_name, question_list)
     for q, a in zip(question_list, assigned):
         q.update(a)
 
-    # Step 4: Re-cluster everything
     clusters = cluster_similar_questions(question_list, threshold=0.7)
 
     final_json_list = []
@@ -276,7 +258,6 @@ def create_question_json(subject_name, questions, years, marks):
             "chapter_name": [q["chapter_name"] for q in cluster_questions]
         })
 
-    # Step 5: Save (overwrite with merged version)
     with open(save_path, "w", encoding="utf-8") as f:
         json.dump(final_json_list, f, ensure_ascii=False, indent=4)
 
@@ -287,16 +268,11 @@ def create_question_json(subject_name, questions, years, marks):
 
 
 def process_raw_and_questions(subject_name: str, input_file_path: str):
-    # Read raw
     with open(input_file_path, "r", encoding="utf-8") as f:
         raw_text = f.read()
-    # Fix OCR
     text = fix_common_ocr_errors(raw_text)
-    # Remove headers
     text = remove_headers(text)
-    # Debug
     print("DEBUG SAMPLE TEXT:\n", text[:500])
-    # Split by year
     year_sections = split_by_year(text)
     if not year_sections:
         print("No year sections found.")
@@ -305,7 +281,6 @@ def process_raw_and_questions(subject_name: str, input_file_path: str):
     for section in year_sections:
         cleaned = clean_with_llm(section)
         final_sections.append(cleaned)
-    # Save cleaned
     output_dir = os.path.join(Config.CLEANED_TEXT_DIR, subject_name, "past_paper")
     os.makedirs(output_dir, exist_ok=True)
     file_name = os.path.basename(input_file_path)
@@ -313,7 +288,6 @@ def process_raw_and_questions(subject_name: str, input_file_path: str):
     with open(save_path, "w", encoding="utf-8") as f:
         f.write("\n\n".join(final_sections))
     print(f"Saved cleaned file to {save_path}")
-    # Extract questions
     questions, years, marks = extract_questions("\n\n".join(final_sections))
     existing_years = get_existing_years(subject_name)
 
@@ -334,12 +308,10 @@ def process_raw_and_questions(subject_name: str, input_file_path: str):
         print("All cleaned years already exist. Nothing new to add.")
         return
 
-    # Replace original lists with filtered ones
     questions = filtered_questions
     years = filtered_years
     marks = filtered_marks
 
-    # Create JSON
     final_json = create_question_json(subject_name, questions, years, marks)
     return final_json
 

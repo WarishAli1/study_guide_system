@@ -8,7 +8,6 @@ google-auth
 google-auth-oauthlib
 scikit-learn
 numpy
-# Document extraction
 PyMuPDF
 Pillow
 pytesseract

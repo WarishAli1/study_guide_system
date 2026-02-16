@@ -14,35 +14,53 @@ export interface AuthState {
     logout: () => void;
 }
 
-export type DocType = "syllabus" | "notes" | "past_paper";
-
 export interface UploadResponse {
     status: string;
     upload_id: number;
     filename: string;
-    doc_type: DocType;
-    year: number | null;
-    subject: string | null;
+    doc_type: string;
+    subject: string;
     page_count: number;
     ocr_used: boolean;
-    ocr_pages: number[];
     extraction_method: string;
     text_preview: string;
+    text_path: string;
 }
 
-export interface UploadRecord {
-    id: number;
-    original_filename: string;
-    stored_filename: string;
-    doc_type: DocType;
-    year: number | null;
-    subject: string | null;
-    file_path: string;
-    text_path: string | null;
-    page_count: number;
-    ocr_used: boolean;
-    ocr_pages: number[];
-    extraction_method: string;
-    status: "processing" | "completed" | "failed";
-    created_at: string;
+export interface SessionDocument {
+    id: string;
+    name: string;
+    type: "syllabus" | "notes" | "past_paper";
+    uploadedAt: string;
+    status: "uploading" | "success" | "error";
+    uploadId?: number;
+    year?: number;
+    errorMessage?: string;
+}
+
+export interface ChatMessage {
+    id: string;
+    role: "user" | "assistant";
+    content: string;
+    timestamp: string;
+}
+
+export interface Session {
+    id: string;
+    name: string;
+    subject: string;
+    createdAt: string;
+    updatedAt: string;
+    documents: SessionDocument[];
+    messages: ChatMessage[];
+}
+
+export interface Workspace {
+    id: string;
+    name: string;
+    description: string;
+    color: string;
+    createdAt: string;
+    updatedAt: string;
+    sessions: Session[];
 }

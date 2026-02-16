@@ -7,34 +7,24 @@ import {
     CheckCircle2,
     XCircle,
     Loader2,
-    Eye,
-    ScanLine,
+    Trash2,
 } from "lucide-react";
 import { uploadAPI } from "@/lib/api";
-import { UploadResponse, DocType } from "@/lib/types";
+import { useWorkspaceStore } from "@/lib/workspace-store";
+import type { SessionDocument } from "@/lib/types";
 import toast from "react-hot-toast";
+import { v4 as uuidv4 } from "uuid";
 
-/* ── accepted file types ─────────────────────────────────────────────── */
-const ACCEPT =
-    ".pdf,.png,.jpg,.jpeg,.tiff,.tif,.bmp,.webp";
-
-/* ── props ───────────────────────────────────────────────────────────── */
 interface Props {
     title: string;
     description: string;
-    docType: DocType;
+    docType: "syllabus" | "notes" | "past_paper";
     icon: React.ReactNode;
     accentColor: string;
-    requiresYear?: boolean;
-}
-
-/* ── per-file state ──────────────────────────────────────────────────── */
-interface TrackedFile {
-    id: string;
-    name: string;
-    status: "uploading" | "success" | "error";
-    response?: UploadResponse;
-    error?: string;
+    workspaceId: string;
+    sessionId: string;
+    subject: string;
+    existingDocuments: SessionDocument[];
 }
 
 export default function FileUploadCard({
@@ -43,76 +33,83 @@ export default function FileUploadCard({
     docType,
     icon,
     accentColor,
-    requiresYear = false,
+    workspaceId,
+    sessionId,
+    subject,
+    existingDocuments,
 }: Props) {
-    const [files, setFiles] = useState<TrackedFile[]>([]);
     const [isDragging, setIsDragging] = useState(false);
-    const [year, setYear] = useState<string>("");
-    const [subject, setSubject] = useState<string>("");
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [yearInput, setYearInput] = useState<string>("");
+    const [showYearPrompt, setShowYearPrompt] = useState(false);
+    const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    /* ── upload a single file ────────────────────────────────────────── */
-    const uploadOne = async (file: File) => {
-        /* block past_paper uploads without a year */
-        if (requiresYear && !year.trim()) {
-            toast.error("Please enter the exam year before uploading.");
-            return;
-        }
+    const { addDocument, updateDocument, removeDocument } = useWorkspaceStore();
 
-        const parsedYear = year.trim() ? parseInt(year.trim(), 10) : undefined;
-        if (requiresYear && (isNaN(parsedYear!) || parsedYear! < 1900 || parsedYear! > 2099)) {
-            toast.error("Please enter a valid 4-digit year.");
-            return;
-        }
+    const cardDocs = existingDocuments.filter((d) => d.type === docType);
 
-        const id = crypto.randomUUID();
-        setFiles((prev) => [...prev, { id, name: file.name, status: "uploading" }]);
+    const uploadOne = async (file: File, year?: number) => {
+        const docId = uuidv4();
+
+        const newDoc: SessionDocument = {
+            id: docId,
+            name: file.name,
+            type: docType,
+            uploadedAt: new Date().toISOString(),
+            status: "uploading",
+            year,
+        };
+
+        addDocument(workspaceId, sessionId, newDoc);
 
         try {
-            const res = await uploadAPI.uploadFile(
-                file,
-                docType,
-                parsedYear,
-                subject.trim() || undefined
-            );
-            const data: UploadResponse = res.data;
-
-            setFiles((prev) =>
-                prev.map((f) =>
-                    f.id === id ? { ...f, status: "success", response: data } : f
-                )
-            );
-
-            const ocrNote = data.ocr_used
-                ? ` (OCR used on ${data.ocr_pages.length} page${data.ocr_pages.length > 1 ? "s" : ""})`
-                : "";
-            toast.success(`${file.name} — ${data.page_count} pages extracted${ocrNote}`);
+            const res = await uploadAPI.uploadFile(file, docType, subject, sessionId, workspaceId, year);
+            updateDocument(workspaceId, sessionId, docId, {
+                status: "success",
+                uploadId: res.data.upload_id,
+            });
+            toast.success(`${file.name} uploaded`);
         } catch (err: any) {
-            const message =
-                err?.response?.data?.detail || `Failed to upload ${file.name}`;
-            setFiles((prev) =>
-                prev.map((f) =>
-                    f.id === id ? { ...f, status: "error", error: message } : f
-                )
+            updateDocument(workspaceId, sessionId, docId, {
+                status: "error",
+                errorMessage: err?.response?.data?.detail || "Upload failed",
+            });
+            toast.error(
+                err?.response?.data?.detail || `Failed to upload ${file.name}`
             );
-            toast.error(message);
         }
     };
 
-    /* ── handle dropped / selected files ─────────────────────────────── */
     const handleFiles = (list: FileList | null) => {
         if (!list) return;
-        Array.from(list).forEach((f) => uploadOne(f));
+        const files = Array.from(list);
+
+        if (docType === "past_paper") {
+            setPendingFiles(files);
+            setShowYearPrompt(true);
+        } else {
+            files.forEach((f) => uploadOne(f));
+        }
     };
 
-    /* ── toggle preview ──────────────────────────────────────────────── */
-    const togglePreview = (id: string) =>
-        setExpandedId((prev) => (prev === id ? null : id));
+    const handleYearSubmit = () => {
+        const year = parseInt(yearInput, 10);
+        if (isNaN(year) || year < 1900 || year > 2100) {
+            toast.error("Please enter a valid year (e.g., 2023)");
+            return;
+        }
+        pendingFiles.forEach((f) => uploadOne(f, year));
+        setPendingFiles([]);
+        setYearInput("");
+        setShowYearPrompt(false);
+    };
+
+    const handleRemoveDoc = (docId: string) => {
+        removeDocument(workspaceId, sessionId, docId);
+    };
 
     return (
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-            {/* ── header ──────────────────────────────────────────────────── */}
             <div className="flex items-center gap-3 mb-4">
                 <div className={`p-2.5 rounded-xl ${accentColor}`}>{icon}</div>
                 <div>
@@ -121,42 +118,57 @@ export default function FileUploadCard({
                 </div>
             </div>
 
-            {/* ── optional metadata fields ────────────────────────────────── */}
-            <div className="space-y-2 mb-4">
-                {requiresYear && (
-                    <input
-                        type="number"
-                        placeholder="Exam year (e.g. 2023) *"
-                        value={year}
-                        onChange={(e) => setYear(e.target.value)}
-                        min={1900}
-                        max={2099}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-indigo-400
-                       placeholder:text-gray-400"
-                    />
-                )}
-                <input
-                    type="text"
-                    placeholder="Subject name (optional)"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
-                     focus:outline-none focus:ring-2 focus:ring-indigo-400
-                     placeholder:text-gray-400"
-                />
-            </div>
+            {showYearPrompt && (
+                <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                    <p className="text-sm font-medium text-amber-800 mb-2">
+                        Enter the year for {pendingFiles.length} file{pendingFiles.length > 1 ? "s" : ""}:
+                    </p>
+                    <div className="flex gap-2">
+                        <input
+                            type="number"
+                            value={yearInput}
+                            onChange={(e) => setYearInput(e.target.value)}
+                            placeholder="e.g., 2023"
+                            className="flex-1 px-3 py-2 rounded-lg border border-amber-300
+                                       focus:ring-2 focus:ring-amber-500 focus:border-amber-500
+                                       outline-none text-sm"
+                            min={1900}
+                            max={2100}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") handleYearSubmit();
+                                if (e.key === "Escape") {
+                                    setShowYearPrompt(false);
+                                    setPendingFiles([]);
+                                    setYearInput("");
+                                }
+                            }}
+                            autoFocus
+                        />
+                        <button
+                            onClick={handleYearSubmit}
+                            className="px-4 py-2 rounded-lg bg-amber-600 text-white text-sm
+                                       font-medium hover:bg-amber-500 transition-colors"
+                        >
+                            Upload
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowYearPrompt(false);
+                                setPendingFiles([]);
+                                setYearInput("");
+                            }}
+                            className="px-3 py-2 rounded-lg border border-gray-300 text-sm
+                                       text-gray-600 hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
 
-            {/* ── drop zone ───────────────────────────────────────────────── */}
             <div
-                onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                }}
-                onDragLeave={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                }}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
                 onDrop={(e) => {
                     e.preventDefault();
                     setIsDragging(false);
@@ -164,24 +176,23 @@ export default function FileUploadCard({
                 }}
                 onClick={() => inputRef.current?.click()}
                 className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all
-          ${isDragging
+                    ${isDragging
                         ? "border-indigo-400 bg-indigo-50"
                         : "border-gray-300 hover:border-indigo-300 hover:bg-gray-50"
                     }`}
             >
                 <Upload
-                    className={`w-8 h-8 mx-auto mb-3 ${isDragging ? "text-indigo-500" : "text-gray-400"
-                        }`}
+                    className={`w-8 h-8 mx-auto mb-3 ${isDragging ? "text-indigo-500" : "text-gray-400"}`}
                 />
                 <p className="text-sm font-medium text-gray-700">
                     {isDragging ? "Drop files here" : "Drag & drop or click to browse"}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">PDF and image files supported</p>
+                <p className="text-xs text-gray-400 mt-1">PDF files supported</p>
 
                 <input
                     ref={inputRef}
                     type="file"
-                    accept={ACCEPT}
+                    accept=".pdf"
                     multiple
                     className="hidden"
                     onChange={(e) => {
@@ -191,77 +202,43 @@ export default function FileUploadCard({
                 />
             </div>
 
-            {/* ── file list with extraction details ───────────────────────── */}
-            {files.length > 0 && (
-                <ul className="mt-4 space-y-2 max-h-72 overflow-y-auto">
-                    {files.map((f) => (
-                        <li key={f.id} className="bg-gray-50 rounded-lg overflow-hidden">
-                            {/* main row */}
-                            <div className="flex items-center gap-3 p-3">
-                                <FileIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span className="text-sm text-gray-700 truncate flex-1">
-                                    {f.name}
+            {cardDocs.length > 0 && (
+                <ul className="mt-4 space-y-2 max-h-48 overflow-y-auto">
+                    {cardDocs.map((doc) => (
+                        <li
+                            key={doc.id}
+                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group"
+                        >
+                            <FileIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <span className="text-sm text-gray-700 truncate block">
+                                    {doc.name}
                                 </span>
-
-                                {/* badges */}
-                                {f.response?.ocr_used && (
-                                    <span
-                                        className="flex items-center gap-1 text-[11px] text-amber-700
-                               bg-amber-100 px-1.5 py-0.5 rounded-full shrink-0"
-                                        title={`OCR on pages: ${f.response.ocr_pages.join(", ")}`}
-                                    >
-                                        <ScanLine className="w-3 h-3" /> OCR
-                                    </span>
-                                )}
-                                {f.response?.page_count && (
-                                    <span className="text-[11px] text-gray-500 shrink-0">
-                                        {f.response.page_count}p
-                                    </span>
-                                )}
-
-                                {/* preview toggle */}
-                                {f.status === "success" && f.response?.text_preview && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            togglePreview(f.id);
-                                        }}
-                                        className="p-1 text-gray-400 hover:text-indigo-600 transition-colors shrink-0"
-                                        title="Preview extracted text"
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </button>
-                                )}
-
-                                {/* status icon */}
-                                {f.status === "uploading" && (
-                                    <Loader2 className="w-4 h-4 text-indigo-500 animate-spin shrink-0" />
-                                )}
-                                {f.status === "success" && (
-                                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                                )}
-                                {f.status === "error" && (
-                                    <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                                {doc.year && (
+                                    <span className="text-xs text-gray-400">Year: {doc.year}</span>
                                 )}
                             </div>
 
-                            {/* error detail */}
-                            {f.status === "error" && f.error && (
-                                <div className="px-3 pb-3">
-                                    <p className="text-xs text-red-600">{f.error}</p>
-                                </div>
+                            {doc.status === "uploading" && (
+                                <Loader2 className="w-4 h-4 text-indigo-500 animate-spin shrink-0" />
+                            )}
+                            {doc.status === "success" && (
+                                <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                            )}
+                            {doc.status === "error" && (
+                                <XCircle className="w-4 h-4 text-red-500 shrink-0" />
                             )}
 
-                            {/* text preview panel */}
-                            {expandedId === f.id && f.response?.text_preview && (
-                                <div className="border-t border-gray-200 px-3 py-2">
-                                    <p className="text-[11px] font-medium text-gray-500 mb-1">
-                                        Extracted text preview
-                                    </p>
-                                    <pre className="text-xs text-gray-600 whitespace-pre-wrap max-h-40 overflow-y-auto font-mono leading-relaxed">
-                                        {f.response.text_preview}
-                                    </pre>
-                                </div>
+                            {doc.status !== "uploading" && (
+                                <button
+                                    onClick={() => handleRemoveDoc(doc.id)}
+                                    className="p-1 rounded opacity-0 group-hover:opacity-100
+                                               hover:bg-gray-200 text-gray-400 hover:text-red-500
+                                               transition-all shrink-0"
+                                    title="Remove"
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                             )}
                         </li>
                     ))}

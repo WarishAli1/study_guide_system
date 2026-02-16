@@ -31,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    /** Shared helper — stores the token + user from any login response. */
     const handleLoginResponse = (data: { token: string; user: User }) => {
         setToken(data.token);
         setUser(data.user);
@@ -41,11 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = async (googleToken: string) => {
         const res = await authAPI.googleLogin(googleToken);
-        handleLoginResponse(res.data);
-    };
-
-    const devLogin = async () => {
-        const res = await authAPI.devLogin();
         handleLoginResponse(res.data);
     };
 
@@ -64,7 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isAuthenticated: !!token,
                 isLoading,
                 login,
-                devLogin,
                 logout,
             }}
         >

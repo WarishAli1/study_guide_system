@@ -1,22 +1,8 @@
-"""
-Document text extraction pipeline.
-
-Digital PDFs  → PyMuPDF  (fast, no external dependency)
-Scanned PDFs  → PyMuPDF renders page to image → pytesseract OCR
-Image files   → Pillow + pytesseract OCR
-
-We deliberately avoid pdf2image (and its poppler system dependency)
-because PyMuPDF can render pages to raster images natively via
-page.get_pixmap().  The only system-level dependency is Tesseract-OCR
-itself, which pytesseract calls as a subprocess.
-"""
-
 import os
 import re
 import logging
 from typing import Optional
-
-import fitz                # PyMuPDF
+import fitz 
 from PIL import Image
 import pytesseract
 
@@ -24,16 +10,9 @@ from config import Config
 
 logger = logging.getLogger(__name__)
 
-# ── Constants ────────────────────────────────────────────────────────────────
-
-# If a page yields fewer than this many characters via PyMuPDF's text
-# extraction, we treat it as a scanned / image-only page and run OCR.
 _SCANNED_PAGE_CHAR_THRESHOLD = 50
 
-# File extensions we consider images (everything else is treated as PDF).
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp", ".webp"}
-
-# ── One-time setup ───────────────────────────────────────────────────────────
 
 _tesseract_available: Optional[bool] = None
 
@@ -44,7 +23,6 @@ def _check_tesseract() -> bool:
     if _tesseract_available is not None:
         return _tesseract_available
 
-    # Point pytesseract at a custom path if configured.
     if Config.TESSERACT_CMD:
         pytesseract.pytesseract.tesseract_cmd = Config.TESSERACT_CMD
 
@@ -59,9 +37,6 @@ def _check_tesseract() -> bool:
         )
         _tesseract_available = False
     return _tesseract_available
-
-
-# ── Internal helpers ─────────────────────────────────────────────────────────
 
 def _is_scanned_page(text: str) -> bool:
     """Heuristic: a page with very little extractable text is likely scanned."""
@@ -80,39 +55,14 @@ def _render_page_to_pil(page: fitz.Page, dpi: int) -> Image.Image:
 
 
 def _clean_text(text: str) -> str:
-    """Normalise whitespace and remove common extraction artefacts."""
-    # Form-feed characters (page breaks in some PDFs)
     text = text.replace("\x0c", "\n")
-    # Normalise line endings
     text = text.replace("\r\n", "\n").replace("\r", "\n")
-    # Collapse 3 + blank lines into 2
     text = re.sub(r"\n{3,}", "\n\n", text)
-    # Collapse runs of spaces / tabs (but keep newlines)
     text = re.sub(r"[^\S\n]+", " ", text)
-    # Strip each line
     text = "\n".join(line.strip() for line in text.split("\n"))
     return text.strip()
 
-
-# ── Public API ───────────────────────────────────────────────────────────────
-
 def extract_text_from_pdf(file_path: str) -> dict:
-    """
-    Extract text from a PDF.
-
-    1. Try PyMuPDF's built-in text extraction on every page.
-    2. For any page that looks scanned (< threshold chars), render it to
-       an image with PyMuPDF and run pytesseract.
-
-    Returns
-    -------
-    dict
-        text        : full extracted text (str)
-        page_count  : number of pages (int)
-        ocr_pages   : 1-indexed list of pages where OCR was used
-        ocr_used    : whether OCR was used at all (bool)
-        method      : "pymupdf" | "pymupdf+ocr"
-    """
     has_tesseract = _check_tesseract()
     dpi = Config.OCR_DPI
 
@@ -173,8 +123,8 @@ def extract_text_from_image(file_path: str) -> dict:
 
     try:
         img = Image.open(file_path)
-        img.verify()                       # quick integrity check
-        img = Image.open(file_path)        # reopen after verify
+        img.verify()
+        img = Image.open(file_path)
     except Exception as exc:
         raise RuntimeError(f"Could not open image: {exc}") from exc
 
@@ -190,10 +140,6 @@ def extract_text_from_image(file_path: str) -> dict:
 
 
 def extract_text(file_path: str) -> dict:
-    """
-    Unified entry point.  Dispatches to the right extractor based on
-    file extension.
-    """
     ext = os.path.splitext(file_path)[1].lower()
 
     if ext == ".pdf":
@@ -205,10 +151,6 @@ def extract_text(file_path: str) -> dict:
 
 
 def save_raw_text(text: str, filename: str, output_dir: str) -> str:
-    """
-    Write *text* to a .txt file inside *output_dir*.
-    Returns the absolute path to the written file.
-    """
     os.makedirs(output_dir, exist_ok=True)
     base = os.path.splitext(filename)[0] + ".txt"
     path = os.path.join(output_dir, base)

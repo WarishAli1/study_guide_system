@@ -12,14 +12,14 @@ export default function LoginPage() {
     const router = useRouter();
 
     useEffect(() => {
-        if (!isLoading && isAuthenticated) router.replace("/upload");
+        if (!isLoading && isAuthenticated) router.replace("/dashboard");
     }, [isAuthenticated, isLoading, router]);
 
     const handleSuccess = async (credentialResponse: any) => {
         try {
             await login(credentialResponse.credential);
             toast.success("Welcome!");
-            router.push("/upload");
+            router.push("/dashboard");
         } catch {
             toast.error("Login failed. Please try again.");
         }
@@ -35,7 +35,6 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex flex-col lg:flex-row">
-            {/* ---- left panel (hero) ---- */}
             <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 text-white flex-col justify-center px-16">
                 <div className="max-w-md">
                     <div className="flex items-center gap-3 mb-8">
