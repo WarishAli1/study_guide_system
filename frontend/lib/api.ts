@@ -25,17 +25,16 @@ export const uploadAPI = {
     uploadFile: (
         file: File,
         docType: string,
-        subject: string,
         sessionId: string,
-        workspaceId: string,
         year?: number
     ) => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("doc_type", docType);
-        formData.append("subject", subject);
         formData.append("session_id", sessionId);
-        formData.append("workspace_id", workspaceId);
+        // Backend still requires these fields
+        formData.append("subject", "general");
+        formData.append("workspace_id", "default");
         if (year !== undefined) {
             formData.append("year", year.toString());
         }

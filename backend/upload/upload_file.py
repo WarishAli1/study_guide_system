@@ -162,9 +162,9 @@ def _fetch_uploads(
 async def upload_file(
     file: UploadFile = File(...),
     doc_type: str = Form(...),
-    subject: str = Form(...),
     session_id: str = Form(...),
-    workspace_id: str = Form(...),
+    subject: str = Form("general"),
+    workspace_id: str = Form("default"),
     year: Optional[int] = Form(None),
 ):
     if doc_type not in VALID_DOC_TYPES:

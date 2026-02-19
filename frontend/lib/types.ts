@@ -48,19 +48,9 @@ export interface ChatMessage {
 export interface Session {
     id: string;
     name: string;
-    subject: string;
+    description: string;
     createdAt: string;
     updatedAt: string;
     documents: SessionDocument[];
     messages: ChatMessage[];
-}
-
-export interface Workspace {
-    id: string;
-    name: string;
-    description: string;
-    color: string;
-    createdAt: string;
-    updatedAt: string;
-    sessions: Session[];
 }
