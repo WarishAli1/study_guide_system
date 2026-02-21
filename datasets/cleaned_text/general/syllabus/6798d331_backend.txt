@@ -1,0 +1,22 @@
+Chapter 1: Introduction
+Credit Hours: 3
+Marks Distribution: 10
+
+Chapter 2: Data Structures
+Credit Hours: 4
+Marks Distribution: 15
+
+Chapter 3: Algorithms
+Credit Hours: 3
+Marks Distribution: 12
+
+Chapter 4: Computer Networks
+Credit Hours: 4
+Marks Distribution: 18
+
+Chapter 5: Database Management Systems
+Credit Hours: 3
+Marks Distribution: 10
+
+Total Credit Hours: 17
+Total Marks: 65

@@ -1,71 +1,74 @@
+import logging
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
-from jose import jwt
-from datetime import datetime, timedelta
-from config import Config
-from auth.users import get_or_create_user
 
+from config import Config
+from auth.users import get_or_create_user, create_jwt_token
+
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
-GOOGLE_CLIENT_ID = Config.GOOGLE_CLIENT_ID
-JWT_SECRET_KEY = Config.JWT_SECRET_KEY
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
-class TokenSchema(BaseModel):
+class GoogleLoginRequest(BaseModel):
     token: str
 
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
 
-@router.post("/google")
-async def google_login(payload: TokenSchema):
-    token = payload.token
-    print("=" * 60)
-    print(f"GOOGLE_CLIENT_ID loaded: {GOOGLE_CLIENT_ID}")
-    print(f"CLIENT_ID is None: {GOOGLE_CLIENT_ID is None}")
-    print(f"CLIENT_ID length: {len(GOOGLE_CLIENT_ID) if GOOGLE_CLIENT_ID else 0}")
-    print(f"Token received (first 50 chars): {token[:50]}...")
-    print(f"Token length: {len(token)}")
-    print("=" * 60)
-
+def _try_verify_id_token(token: str) -> dict | None:
+    """
+    Try verifying token as a Google ID token. If it fails, return None.
+    """
     try:
-        idinfo = id_token.verify_oauth2_token(
+        return id_token.verify_oauth2_token(
             token,
             google_requests.Request(),
-            GOOGLE_CLIENT_ID
+            getattr(Config, "GOOGLE_CLIENT_ID", None),
         )
+    except Exception:
+        return None
 
-        print(f"Verification SUCCESS: {idinfo.get('email')}")
 
-        google_id = idinfo['sub']
-        email = idinfo['email']
-        name = idinfo.get('name', '')
-        picture = idinfo.get('picture', '')
+async def _get_userinfo_from_access_token(access_token: str) -> dict:
+    """
+    Fetch user profile from Google using OAuth access_token.
+    """
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    if resp.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+    return resp.json()
 
-        user = get_or_create_user(google_id, email, name, picture)
-        access_token = create_access_token(data={"sub": str(user['id'])})
 
-        return {"token": access_token, "user": user}
+@router.post("/google")
+async def google_login(request: GoogleLoginRequest):
+    token = request.token
 
-    except ValueError as e:
-        print(f"TOKEN VERIFICATION FAILED: {e}")
-        raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
+    decoded = _try_verify_id_token(token)
+    if decoded:
+        google_id = decoded.get("sub")
+        email = decoded.get("email")
+        name = decoded.get("name") or ""
+        picture = decoded.get("picture") or ""
+    else:
+        data = await _get_userinfo_from_access_token(token)
+        google_id = data.get("sub")
+        email = data.get("email")
+        name = data.get("name") or ""
+        picture = data.get("picture") or ""
 
-    except Exception as e:
-        print(f"UNEXPECTED ERROR: {type(e).__name__}: {e}")
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+    if not google_id or not email:
+        raise HTTPException(status_code=401, detail="Could not retrieve Google identity")
 
-@router.get("/profile")
-async def get_profile(user_id: int):
-    from auth.users import get_user_by_id
-    user = get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    user = get_or_create_user(google_id, email, name, picture)
+    jwt_token = create_jwt_token(user["id"], user["email"])
+
+    return {
+        "token": jwt_token,
+        "user": user,
+    }
