@@ -9,7 +9,7 @@ import {
     type ReactNode,
 } from "react";
 import { v4 as uuidv4 } from "uuid";
-import type { Session, SessionDocument } from "./types";
+import type { Session, SessionDocument, StudyGuideReport } from "./types";
 
 export type SessionView = "dashboard" | "documents" | "chat" | "guide";
 
@@ -30,6 +30,8 @@ interface SessionStore {
     addDocument: (sessionId: string, doc: SessionDocument) => void;
     updateDocument: (sessionId: string, docId: string, updates: Partial<SessionDocument>) => void;
     removeDocument: (sessionId: string, docId: string) => void;
+
+    setCachedGuide: (sessionId: string, guide: StudyGuideReport | null) => void;
 
     getActiveSession: () => Session | undefined;
 }
@@ -57,7 +59,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const [hydrated, setHydrated] = useState(false);
 
     useEffect(() => {
-        setSessions(loadFromStorage<Session[]>(STORAGE_KEY, []));
+        const loaded = loadFromStorage<Session[]>(STORAGE_KEY, []);
+        // Ensure cachedGuide field exists on older sessions
+        const migrated = loaded.map((s) => ({
+            ...s,
+            cachedGuide: s.cachedGuide ?? null,
+        }));
+        setSessions(migrated);
         setActiveSessionId(loadFromStorage<string | null>(ACTIVE_SS_KEY, null));
         setSidebarOpen(window.innerWidth >= 1024);
         setHydrated(true);
@@ -87,6 +95,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
                 updatedAt: now,
                 documents: [],
                 messages: [],
+                cachedGuide: null,
             };
             setSessions((prev) => [session, ...prev]);
             setActiveSessionId(session.id);
@@ -183,6 +192,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         []
     );
 
+    const setCachedGuide = useCallback(
+        (sessionId: string, guide: StudyGuideReport | null) => {
+            const now = new Date().toISOString();
+            setSessions((prev) =>
+                prev.map((s) =>
+                    s.id === sessionId
+                        ? { ...s, cachedGuide: guide, updatedAt: now }
+                        : s
+                )
+            );
+        },
+        []
+    );
+
     const getActiveSession = useCallback(
         () => sessions.find((s) => s.id === activeSessionId),
         [sessions, activeSessionId]
@@ -203,6 +226,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         addDocument,
         updateDocument,
         removeDocument,
+        setCachedGuide,
         getActiveSession,
     };
 

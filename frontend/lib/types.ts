@@ -34,7 +34,6 @@ export interface SessionDocument {
     uploadedAt: string;
     status: "uploading" | "success" | "error";
     uploadId?: number;
-    year?: number;
     errorMessage?: string;
 }
 
@@ -45,6 +44,39 @@ export interface ChatMessage {
     timestamp: string;
 }
 
+// ── Study Guide types ──
+
+export interface GuideQuestion {
+    question: string;
+    freq: number;
+    years: string[];
+    marks: (number | null)[];
+}
+
+export interface GuideChapter {
+    chapter_id: string;
+    chapter_name: string;
+    credit_hours: number | null;
+    marks_distribution: number | null;
+    importance_score: number;
+    priority: "HIGH" | "MEDIUM" | "LOW";
+    topics: string[];
+    keywords: string[];
+    questions: GuideQuestion[];
+    total_questions: number;
+    recommended_hours: number;
+}
+
+export interface StudyGuideReport {
+    subject_name: string;
+    total_chapters: number;
+    total_credit_hours: number | null;
+    total_marks: number | null;
+    total_questions: number;
+    generated_at: string;
+    chapters: GuideChapter[];
+}
+
 export interface Session {
     id: string;
     name: string;
@@ -53,4 +85,5 @@ export interface Session {
     updatedAt: string;
     documents: SessionDocument[];
     messages: ChatMessage[];
+    cachedGuide: StudyGuideReport | null;
 }

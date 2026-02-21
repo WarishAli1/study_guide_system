@@ -25,23 +25,27 @@ export const uploadAPI = {
     uploadFile: (
         file: File,
         docType: string,
-        sessionId: string,
-        year?: number
+        sessionId: string
     ) => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("doc_type", docType);
         formData.append("session_id", sessionId);
-        // Backend still requires these fields
         formData.append("subject", "general");
         formData.append("workspace_id", "default");
-        if (year !== undefined) {
-            formData.append("year", year.toString());
-        }
         return api.post("/api/upload", formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
     },
+};
+
+export const guideAPI = {
+    generate: (subjectName: string, useCache: boolean = true) =>
+        api.get(`/api/guide/generate/${encodeURIComponent(subjectName)}`, {
+            params: { use_cache: useCache },
+        }),
+    regenerate: (subjectName: string) =>
+        api.post(`/api/guide/regenerate/${encodeURIComponent(subjectName)}`),
 };
 
 export default api;

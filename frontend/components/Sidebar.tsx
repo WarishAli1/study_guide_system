@@ -88,13 +88,11 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
         `}
             >
                 <div className={`flex flex-col h-full overflow-hidden ${sidebarOpen ? "opacity-100" : "opacity-0"} transition-opacity`}>
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-4 border-b border-neutral-200">
+                    <div className="flex items-center justify-between px-4 py-4">
                         <div
                             className="flex items-center gap-2 cursor-pointer"
                             onClick={() => setActiveSession(null)}
                         >
-                            <BookOpen className="w-5 h-5 text-neutral-800" />
                             <span className="text-base font-semibold text-neutral-900 tracking-tight">ExamGuide</span>
                         </div>
                         <button
@@ -105,9 +103,8 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                         </button>
                     </div>
 
-                    {/* Session Nav — shown when a session is active */}
                     {activeSession && (
-                        <div className="border-b border-neutral-200">
+                        <div className="border-b border-neutral-200/50">
                             <div className="px-4 py-3">
                                 <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1">Session</p>
                                 <p className="text-sm font-medium text-neutral-900 truncate">{activeSession.name}</p>
@@ -137,7 +134,6 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                         </div>
                     )}
 
-                    {/* New Session Button */}
                     <div className="px-3 py-3">
                         <button
                             onClick={onCreateSession}
@@ -151,7 +147,6 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                         </button>
                     </div>
 
-                    {/* Sessions List */}
                     <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-0.5">
                         <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium px-2 mb-1">
                             Sessions
@@ -196,8 +191,8 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                                 onClick={(e) => handleDeleteSession(e, session.id)}
                                                 title={confirmDelete === session.id ? "Click again to confirm" : "Delete"}
                                                 className={`p-1 rounded transition-colors shrink-0 ${confirmDelete === session.id
-                                                        ? "bg-red-100 text-red-500"
-                                                        : "hover:bg-neutral-200 text-neutral-400"
+                                                    ? "bg-red-100 text-red-500"
+                                                    : "hover:bg-neutral-200 text-neutral-400"
                                                     }`}
                                             >
                                                 <Trash2 className="w-3 h-3" />

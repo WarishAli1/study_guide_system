@@ -29,7 +29,7 @@ VALID_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp", ".
 
 def init_uploads_table() -> None:
     conn = sqlite3.connect(DB_PATH)
-    
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS uploads (
             id                INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -180,14 +180,8 @@ async def upload_file(
             detail=f"Unsupported file type '{ext}'. Allowed: {', '.join(sorted(VALID_EXTENSIONS))}",
         )
 
-    if doc_type == "past_paper" and year is None:
-        raise HTTPException(
-            status_code=400,
-            detail="'year' is required when doc_type is past_paper.",
-        )
-
     if not subject.strip():
-        raise HTTPException(status_code=400, detail="'subject' is required.")
+        subject = "general"
 
     uid = uuid.uuid4().hex[:8]
     stored_filename = f"{uid}_{file.filename}"
@@ -254,11 +248,9 @@ async def upload_file(
             logger.info(f"Chapter processing result: {processing_result}")
 
         elif doc_type == "past_paper":
-            process_raw_and_questions(subject, text_path)
-            processing_result = {
-                "success": True,
-                "message": "Past paper processed successfully.",
-            }
+            processing_result = process_raw_and_questions(subject, text_path)
+            logger.info(f"Past paper processing result: {processing_result}")
+
     except Exception as e:
         logger.error(f"Content processing failed for upload {upload_id}: {e}")
         processing_result = {"success": False, "error": str(e)}
