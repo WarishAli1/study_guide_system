@@ -1,10 +1,48 @@
+"use client";
+
+import { useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useGoogleLogin } from "@react-oauth/google";
+import { useAuth } from "@/lib/auth";
 import { BookOpen, BrainCircuit, MessageSquareText, FileSearch } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
+    const { login, isAuthenticated, isLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && isAuthenticated) router.replace("/dashboard");
+    }, [isAuthenticated, isLoading, router]);
+
+    const handleGoogleLogin = useGoogleLogin({
+        flow: "implicit",
+        onSuccess: async (tokenResponse) => {
+            try {
+                await login(tokenResponse.access_token);
+                toast.success("Welcome!");
+                router.push("/dashboard");
+            } catch {
+                toast.error("Login failed. Please try again.");
+            }
+        },
+        onError: () => {
+            toast.error("Google sign-in failed");
+        },
+    });
+
+    if (isLoading) {
+        return (
+            <div className="min-h-dvh flex items-center justify-center">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent" />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-dvh w-full lg:grid lg:grid-cols-12">
+            {/* ─── Left: Hero (Dark) ─────────────────────────────── */}
             <div className="hidden lg:flex lg:col-span-7 flex-col justify-between bg-zinc-950 px-14 py-14 text-white">
                 <div className="flex items-center gap-2.5">
                     <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10">
@@ -17,10 +55,16 @@ export default function LoginPage() {
                     <div className="space-y-10">
                         <div className="space-y-5">
                             <h1 className="tracking-tight leading-tight">
-                                <span style={{ fontFamily: '"Instrument Serif", serif' }} className="italic block text-5xl">
+                                <span
+                                    style={{ fontFamily: '"Instrument Serif", serif' }}
+                                    className="italic block text-5xl"
+                                >
                                     Study Smarter,
                                 </span>
-                                <span style={{ fontFamily: '"Instrument Serif", serif' }} className="block text-5xl text-zinc-500">
+                                <span
+                                    style={{ fontFamily: '"Instrument Serif", serif' }}
+                                    className="block text-5xl text-zinc-500"
+                                >
                                     Not Harder
                                 </span>
                             </h1>
@@ -56,9 +100,16 @@ export default function LoginPage() {
                 </div>
             </div>
 
+            {/* ─── Right: Login (Light) ──────────────────────────── */}
             <div className="lg:col-span-5 flex min-h-dvh flex-col justify-center bg-white px-8 py-14 sm:px-12 lg:px-16">
                 <div className="mx-auto w-full max-w-md">
                     <div className="space-y-8">
+                        {/* Mobile logo */}
+                        <div className="flex items-center gap-2 lg:hidden">
+                            <BookOpen className="w-5 h-5 text-neutral-900" />
+                            <span className="text-base font-bold text-neutral-900">ExamGuide</span>
+                        </div>
+
                         <div className="space-y-2">
                             <h2 className="text-3xl font-bold tracking-tight text-gray-900">
                                 Get started
@@ -71,6 +122,7 @@ export default function LoginPage() {
                         <div className="space-y-6">
                             <button
                                 type="button"
+                                onClick={() => handleGoogleLogin()}
                                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2"
                             >
                                 <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -99,9 +151,9 @@ export default function LoginPage() {
                             </p>
 
                             <div className="flex justify-center">
-                                <Link href="#" className="text-xs text-gray-400 hover:text-gray-600">
+                                <span className="text-xs text-gray-400">
                                     New here? Sign in to create your first session &rarr;
-                                </Link>
+                                </span>
                             </div>
                         </div>
                     </div>
