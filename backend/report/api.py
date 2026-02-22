@@ -59,7 +59,8 @@ def _load_cached_report(subject_name: str) -> Optional[dict]:
 def _subject_exists(subject_name: str) -> bool:
     return bool(
         _find_json_file(_subject_dir(SYLLABUS_JSON_DIR, subject_name))
-        and _find_json_file(_subject_dir(CHAPTER_JSON_DIR, subject_name))
+        and _find_json_file(_subject_dir(CHAPTER_JSON_DIR, subject_name)) and 
+        _find_json_file(_subject_dir(QUESTION_JSON_DIR, subject_name))
     )
 
 
