@@ -88,7 +88,7 @@ def list_subjects() -> list[SubjectInfo]:
 
 
 @router.get("/report/{subject_name}")
-def get_report(subject_name: str, use_cache: bool = Query(default=True)) -> JSONResponse:
+def get_report(subject_name: str, use_cache: bool = Query(default=False)) -> JSONResponse:
     _require_subject(subject_name)
     if use_cache:
         cached = _load_cached_report(subject_name)
@@ -156,15 +156,3 @@ def regenerate_report(subject_name: str) -> JSONResponse:
         "generated_at": report["generated_at"],
         "report": report,
     })
-
-
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI(title="Study Insight Report API", version="1.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-app.include_router(router, prefix="/api/v1")
-
-@app.get("/", include_in_schema=False)
-def root():
-    return {"docs": "/docs"}

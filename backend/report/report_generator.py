@@ -48,6 +48,8 @@ def _build_question_map(questions: list) -> dict:
             chapter_ids = [chapter_ids]
         freq  = q.get("freq", 1)
         marks = [m for m in (q.get("marks") or []) if m is not None]
+
+        # FIX: deduplicate per chapter — a question belongs to a chapter once
         seen_chapters = set()
         for cid in chapter_ids:
             if cid in seen_chapters:

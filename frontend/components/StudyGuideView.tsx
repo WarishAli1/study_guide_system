@@ -23,28 +23,19 @@ interface Props {
     session: Session;
 }
 
-function resolveDisplayTitle(report: StudyGuideReport | null, sessionName: string): string {
-    if (!report) return sessionName;
-
-    const name = report.subject_name;
-    if (
-        name &&
-        typeof name === "string" &&
-        name.trim().length > 0 &&
-        name.trim().toLowerCase() !== "general" &&
-        name.trim().toLowerCase() !== "default"
-    ) {
-        return name.trim();
-    }
-
-    return sessionName;
-}
-
 export default function StudyGuideView({ session }: Props) {
     const { setActiveView, setCachedGuide } = useSessionStore();
     const [report, setReport] = useState<StudyGuideReport | null>(
         session.cachedGuide
     );
+    if (!report) return null;
+    
+    const sortedChapters = report.chapters.sort((a, b) => {
+        const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+        const priorityDiff = priorityOrder[b.study_priority] - priorityOrder[a.study_priority];
+        if (priorityDiff !== 0) return priorityDiff;
+        return b.importance_score - a.importance_score;
+    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -54,8 +45,9 @@ export default function StudyGuideView({ session }: Props) {
     const hasPastPapers = session.documents.some(
         (d) => d.type === "past_paper" && d.status === "success"
     );
-
-    const subjectName = "general";
+    
+    // Use the session name as the subject
+    const subjectName = session.name;
 
     useEffect(() => {
         if (session.cachedGuide && !report) {
@@ -94,7 +86,7 @@ export default function StudyGuideView({ session }: Props) {
         setError(null);
         try {
             const res = await guideAPI.regenerate(subjectName);
-            saveReport(res.data as StudyGuideReport);
+            saveReport(res.data.report as StudyGuideReport);
             toast.success("Study guide regenerated");
         } catch (err: any) {
             const detail = err?.response?.data?.detail;
@@ -201,7 +193,13 @@ export default function StudyGuideView({ session }: Props) {
 
     if (!report) return null;
 
-    const displayTitle = resolveDisplayTitle(report, session.name);
+    // Use report.subject_name if available and meaningful, otherwise session name
+    const displayTitle =
+        report.subject_name &&
+        report.subject_name.trim().toLowerCase() !== "general" &&
+        report.subject_name.trim().toLowerCase() !== "default"
+            ? report.subject_name.trim()
+            : session.name;
 
     return (
         <div className="flex-1 overflow-y-auto">
@@ -260,12 +258,12 @@ export default function StudyGuideView({ session }: Props) {
                     <SummaryCard
                         icon={<HelpCircle className="w-4 h-4" />}
                         label="Past Questions"
-                        value={report.total_questions}
+                        value={report.total_past_questions}
                     />
                 </div>
 
                 <div className="space-y-3">
-                    {report.chapters.map((ch) => (
+                    {sortedChapters.map((ch) => (
                         <ChapterCard key={ch.chapter_id} chapter={ch} />
                     ))}
                 </div>
@@ -330,50 +328,44 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                    {chapter.recommended_hours > 0 && (
-                        <span className="text-xs text-neutral-400 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {chapter.recommended_hours}h
-                        </span>
-                    )}
-                    {chapter.total_questions > 0 && (
+                    {chapter.total_past_questions > 0 && (
                         <span className="text-xs text-neutral-400 flex items-center gap-1">
                             <HelpCircle className="w-3 h-3" />
-                            {chapter.total_questions}
+                            {chapter.total_past_questions}
                         </span>
                     )}
                     <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded ${priorityStyles[chapter.priority]
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded ${priorityStyles[chapter.study_priority]
                             }`}
                     >
-                        {chapter.priority}
+                        {chapter.study_priority}
                     </span>
                     <span className="text-xs font-mono text-neutral-500 w-8 text-right">
-                        {chapter.importance_score}
+                        {chapter.importance_score.toFixed(1)}
                     </span>
                 </div>
             </button>
 
             {expanded && (
                 <div className="border-t border-neutral-100 px-4 py-4 space-y-4">
-                    <div className="flex gap-6 text-xs text-neutral-500">
+                    <div className="flex gap-6 text-xs text-neutral-500 flex-wrap">
                         {chapter.credit_hours != null && (
                             <span>Credit Hours: {chapter.credit_hours}</span>
                         )}
                         {chapter.marks_distribution != null && (
                             <span>Marks: {chapter.marks_distribution}</span>
                         )}
-                        <span>Importance: {chapter.importance_score}/10</span>
-                        <span>Study Time: {chapter.recommended_hours}h</span>
+                        <span>Importance: {chapter.importance_score.toFixed(1)}/10</span>
+                        <span>Study Time: {chapter.recommended_study}</span>
                     </div>
 
-                    {chapter.topics.length > 0 && (
+                    {chapter.important_topics.length > 0 && (
                         <div>
                             <h4 className="text-xs font-medium text-neutral-700 uppercase tracking-wider mb-2">
                                 Important Topics
                             </h4>
                             <div className="flex flex-wrap gap-1.5">
-                                {chapter.topics.map((t, i) => (
+                                {chapter.important_topics.map((t, i) => (
                                     <span
                                         key={i}
                                         className="inline-block px-2 py-0.5 rounded text-xs
@@ -386,32 +378,12 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                         </div>
                     )}
 
-                    {chapter.keywords.length > 0 && (
-                        <div>
-                            <h4 className="text-xs font-medium text-neutral-700 uppercase tracking-wider mb-2">
-                                Keywords
-                            </h4>
-                            <div className="flex flex-wrap gap-1.5">
-                                {chapter.keywords.map((k, i) => (
-                                    <span
-                                        key={i}
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs
-                               border border-neutral-200 text-neutral-500"
-                                    >
-                                        <Tag className="w-2.5 h-2.5" />
-                                        {k}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {chapter.questions.length > 0 && (
+                    {chapter.faq.length > 0 && (
                         <div>
                             <h4 className="text-xs font-medium text-neutral-700 uppercase tracking-wider mb-2">
                                 Questions by Frequency
                             </h4>
-                            <div className="border border-neutral-200 rounded-lg overflow-hidden">
+                            <div className="border border-neutral-200 rounded-lg overflow-x-auto">
                                 <table className="w-full text-xs">
                                     <thead>
                                         <tr className="bg-neutral-50 border-b border-neutral-200">
@@ -430,20 +402,20 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-neutral-100">
-                                        {chapter.questions.map((q, i) => {
+                                        {chapter.faq.map((q, i) => {
                                             const validMarks = (q.marks || []).filter(
                                                 (m): m is number => m != null
                                             );
                                             const markDisplay =
                                                 validMarks.length > 0
-                                                    ? [...new Set(validMarks.map(String))].join(", ")
+                                                    ? Array.from(new Set(validMarks.map(String))).join(", ")
                                                     : "\u2014";
 
                                             const years = (q.years || []).map((y) => String(y));
                                             const yearDisplay =
                                                 years.length > 0
                                                     ? years.slice(0, 3).join(", ") +
-                                                    (years.length > 3 ? "..." : "")
+                                                      (years.length > 3 ? "..." : "")
                                                     : "\u2014";
 
                                             return (
@@ -451,19 +423,19 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                                                     key={i}
                                                     className="hover:bg-neutral-50 transition-colors"
                                                 >
-                                                    <td className="px-3 py-2 text-neutral-700 leading-relaxed">
-                                                        {q.question.length > 200
-                                                            ? q.question.slice(0, 200) + "..."
-                                                            : q.question}
+                                                    {/* Question cell - now with wrapping and no truncation */}
+                                                    <td className="px-3 py-2 text-neutral-700 leading-relaxed break-words">
+                                                        {q.question}
                                                     </td>
                                                     <td className="px-3 py-2 text-center">
                                                         <span
-                                                            className={`inline-block min-w-[20px] px-1.5 py-0.5 rounded text-[10px] font-semibold ${q.freq >= 3
-                                                                ? "bg-neutral-900 text-white"
-                                                                : q.freq >= 2
-                                                                    ? "bg-neutral-200 text-neutral-700"
-                                                                    : "bg-neutral-100 text-neutral-500"
-                                                                }`}
+                                                            className={`inline-block min-w-[20px] px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                                                q.freq >= 3
+                                                                    ? "bg-neutral-900 text-white"
+                                                                    : q.freq >= 2
+                                                                        ? "bg-neutral-200 text-neutral-700"
+                                                                        : "bg-neutral-100 text-neutral-500"
+                                                            }`}
                                                         >
                                                             {q.freq}
                                                         </span>
@@ -483,7 +455,7 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                         </div>
                     )}
 
-                    {chapter.questions.length === 0 && (
+                    {chapter.faq.length === 0 && (
                         <p className="text-xs text-neutral-400">
                             No past paper questions mapped to this chapter.
                         </p>

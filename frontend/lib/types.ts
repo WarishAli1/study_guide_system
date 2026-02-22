@@ -54,17 +54,20 @@ export interface GuideQuestion {
 }
 
 export interface GuideChapter {
-    chapter_id: string;
+    chapter_id: number | string;
     chapter_name: string;
     credit_hours: number | null;
     marks_distribution: number | null;
     importance_score: number;
-    priority: "HIGH" | "MEDIUM" | "LOW";
-    topics: string[];
-    keywords: string[];
-    questions: GuideQuestion[];
-    total_questions: number;
-    recommended_hours: number;
+    study_priority: "HIGH" | "MEDIUM" | "LOW";
+    recommended_study: string;          // e.g. "15.1 hrs recommended"
+    important_topics: string[];
+    total_subtopics: number;
+    total_past_questions: number;
+    faq: GuideQuestion[];
+    faq_count: number;
+    max_marks_question: number;
+    exam_tips: string[];
 }
 
 export interface StudyGuideReport {
@@ -72,8 +75,15 @@ export interface StudyGuideReport {
     total_chapters: number;
     total_credit_hours: number | null;
     total_marks: number | null;
-    total_questions: number;
+    total_past_questions: number;
     generated_at: string;
+    study_priority_order: Array<{
+        chapter_id: number | string;
+        chapter_name: string;
+        importance_score: number;
+        study_priority: string;
+        faq_count: number;
+    }>;
     chapters: GuideChapter[];
 }
 

@@ -37,8 +37,8 @@ export default function FileUploadCard({
     const [selectedDocType, setSelectedDocType] = useState<string>("syllabus");
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const { addDocument, updateDocument, removeDocument } = useSessionStore();
-
+    const { addDocument, updateDocument, removeDocument, getActiveSession, sessions, activeSessionId } = useSessionStore();
+    const activeSession = getActiveSession();
     const uploadOne = async (file: File, docType: string) => {
         const docId = uuidv4();
         const newDoc: SessionDocument = {
@@ -48,27 +48,32 @@ export default function FileUploadCard({
             uploadedAt: new Date().toISOString(),
             status: "uploading",
         };
-
         addDocument(sessionId, newDoc);
 
         try {
-            const res = await uploadAPI.uploadFile(file, docType, sessionId);
+            const session = sessions.find(s => s.id === sessionId);
+            const subject = session?.name || "general";
+            const res = await uploadAPI.uploadFile(
+            file,
+            docType,
+            subject
+            );
+
             updateDocument(sessionId, docId, {
-                status: "success",
-                uploadId: res.data.upload_id,
+            status: "success",
+            uploadId: res.data.upload_id,
             });
             toast.success(`${file.name} uploaded`);
         } catch (err: any) {
             const detail = err?.response?.data?.detail;
             let errorMsg = `Failed to upload ${file.name}`;
-            if (typeof detail === "string") {
-                errorMsg = detail;
-            } else if (Array.isArray(detail)) {
-                errorMsg = detail.map((d: any) => d.msg || JSON.stringify(d)).join("; ");
-            }
+            if (typeof detail === "string") errorMsg = detail;
+            else if (Array.isArray(detail))
+            errorMsg = detail.map((d: any) => d.msg || JSON.stringify(d)).join("; ");
+
             updateDocument(sessionId, docId, {
-                status: "error",
-                errorMessage: errorMsg,
+            status: "error",
+            errorMessage: errorMsg,
             });
             toast.error(errorMsg);
         }
@@ -79,8 +84,20 @@ export default function FileUploadCard({
         Array.from(list).forEach((f) => uploadOne(f, selectedDocType));
     };
 
-    const handleRemoveDoc = (docId: string) => {
+    const handleRemoveDoc = async (docId: string,doc: SessionDocument,uploadId?: number) => {
+        if (uploadId) {
+            try {
+            const session = sessions.find(s => s.id === sessionId);
+            const subject = session?.name || "general";
+            const docType = doc.type;
+            await uploadAPI.deleteUpload(subject, docType);
+            } catch (err) {
+            toast.error("Failed to delete file from server");
+            return;
+            }
+        }
         removeDocument(sessionId, docId);
+        toast.success("Document removed");
     };
 
     const docCounts = {
@@ -234,7 +251,7 @@ export default function FileUploadCard({
                                     <td className="px-4 py-2.5">
                                         {doc.status !== "uploading" && (
                                             <button
-                                                onClick={() => handleRemoveDoc(doc.id)}
+                                                onClick={() => handleRemoveDoc(doc.id,doc,doc.uploadId)}
                                                 className="p-1 rounded hover:bg-neutral-100 text-neutral-400 hover:text-red-500 transition-colors"
                                                 title="Remove"
                                             >

@@ -5,11 +5,25 @@ dist/
 .env
 .env.*
 
+backend/.env
+backend/.env.*
+
+frontend/.env
+frontend/.env.*
 __pycache__/
 venv/
 
 backend/venv/
 
+datasets/chapter_json/
+datasets/cleaned_text/
+datasets/question_json/
 datasets/raw_text/
+datasets/reports/
+datasets/syllabus_json/
+datasets/uploads/
+
+database.db
 
 .DS_Store
+

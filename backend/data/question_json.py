@@ -1,349 +1,369 @@
-import json
 import os
 import re
+import json
 import time
-import logging
+import numpy as np
+from sklearn.cluster import AgglomerativeClustering
+from sentence_transformers import SentenceTransformer, util
 from config import Config
+import torch
 from openai import OpenAI
-
-logger = logging.getLogger(__name__)
 
 client = OpenAI(
     api_key=Config.GROQ_API_KEY,
     base_url="https://api.groq.com/openai/v1",
 )
 MODEL_NAME = Config.MODEL_NAME
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+CLEAN_PROMPT = Config.QUESTION_CLEAN_PROMPT
+
+def fix_common_ocr_errors(text: str) -> str:
+    text = text.replace("\\n", " ")
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n\s+\n", "\n\n", text)
+    text = re.sub(r"[zZ]0?(\d{2})", r"20\1", text)
+    text = re.sub(r"2O(\d{2})", r"20\1", text)
+    text = re.sub(r"20G(\d)", r"206\1", text)
+    text = re.sub(r"206\s+(\d)", r"206\1", text)
+    text = re.sub(r"207\s+(\d)", r"207\1", text)
+    text = re.sub(r"(?<=\d)[lI](?=\d)", "1", text)
+    text = re.sub(r"(?<=\d)[Oo](?=\d)", "0", text)
+    replacements = {
+        "pey": "pay",
+        "trros": "taxes",
+        "texeg": "taxes",
+        "erpldr": "explain",
+        "coniunctive": "conjunctive",
+        "dlfrerent": "different",
+        "MeCulloch": "McCulloch",
+        "Pittg": "Pitts"
+    }
+    for wrong, correct in replacements.items():
+        text = re.sub(rf"\b{wrong}\b", correct, text, flags=re.IGNORECASE)
+    return text
+
+HEADER_PATTERNS = [
+    r"TRIBHUVAN UNIVERSITY",
+    r"INSTITUTE OF ENGINEERING",
+    r"Examination Control Division",
+    r"Exam\.",
+    r"Level",
+    r"Programme",
+    r"Full Marks",
+    r"Pass Marks",
+    r"Year\s*/?\s*Part",
+    r"Time",
+    r"Candidates are required",
+    r"Attempt All",
+    r"The figures in the margin",
+    r"Assume suitable data",
+    r"\*+",
+    r"^\d+$"
+]
+def remove_headers(text: str) -> str:
+    lines = text.split("\n")
+    cleaned_lines = [line.strip() for line in lines if not any(re.search(p, line, re.IGNORECASE) for p in HEADER_PATTERNS)]
+    return "\n".join(cleaned_lines)
+
+def split_by_year(text: str):
+    year_pattern = r"(20[5-9]\d\s+[A-Za-z]{3,})"
+    parts = re.split(year_pattern, text)
+    sections = []
+    if len(parts) > 1:
+        for i in range(1, len(parts), 2):
+            year = parts[i].strip()
+            content = parts[i + 1].strip() if i + 1 < len(parts) else ""
+            sections.append(f"{year}\n{content}")
+    return sections
+
+def clean_with_llm(year_text: str) -> str:
+    """
+    Clean text using Groq OpenAI-compatible client.
+    Throttled for llama-4-scout (30K TPM safe).
+    """
+
+    max_retries = 5
+    base_delay = 5  # 5 sec delay between calls (safe for 2500 token jobs)
+
+    # Estimate safe output tokens (hard cap at 2000)
+    estimated_tokens = int(len(year_text.split()) * 1.3)
+    max_output = min(max(800, estimated_tokens), 2000)
+
+    for attempt in range(max_retries):
+        try:
+            response = client.responses.create(
+                model=MODEL_NAME,
+                input=f"{CLEAN_PROMPT}\n\n{year_text}",
+                temperature=0,
+                top_p=0.9,
+                max_output_tokens=max_output
+            )
+
+            # Small throttle after success
+            time.sleep(base_delay)
+
+            return response.output_text.strip()
+
+        except Exception as e:
+            err_msg = str(e).lower()
+
+            if "429" in err_msg or "rate limit" in err_msg:
+                wait_time = base_delay * (2 ** attempt)
+                print(f"[Rate Limit] Waiting {wait_time}s before retry...")
+                time.sleep(wait_time)
+                continue
+
+            elif "402" in err_msg or "quota" in err_msg:
+                raise RuntimeError("API quota exceeded (402). Wait for reset.")
+
+            else:
+                print(f"Request failed: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)
+                else:
+                    print("Max retries reached. Returning original text.")
+                    return year_text
+
+    return year_text
 
 
-def load_syllabus_json(subject_name: str) -> dict:
-    """Load the syllabus JSON for the given subject."""
-    syllabus_dir = os.path.join(Config.SYLLABUS_JSON_DIR, subject_name)
-    if not os.path.isdir(syllabus_dir):
-        logger.warning(f"No syllabus directory found at: {syllabus_dir}")
-        return {}
 
-    json_files = sorted(
-        f for f in os.listdir(syllabus_dir) if f.endswith(".json")
-    )
-    if not json_files:
-        logger.warning(f"No syllabus JSON files found in: {syllabus_dir}")
-        return {}
+def extract_questions(cleaned_text):
+    questions = []
+    years = []
+    marks = []
 
-    path = os.path.join(syllabus_dir, json_files[0])
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    logger.info(f"Loaded syllabus JSON from: {path}")
-    return data
+    # Split by year header
+    year_sections = re.split(r"(20[5-9]\d\s+[A-Za-z]{3,})", cleaned_text)
+    if len(year_sections) < 2:
+        return [], [], []
+
+    for i in range(1, len(year_sections), 2):
+        year = year_sections[i].strip()
+        section = year_sections[i+1].strip()
+        # Split questions by 1., 2., 3. or fallback to blank line if short
+        lines = section.split("\n")
+        q_text = ""
+        for line in lines:
+            # Detect question number
+            if re.match(r"^\d+\.", line.strip()):
+                if q_text:
+                    # Save previous question
+                    questions.append(q_text.strip())
+                    years.append(year)
+                    # Extract marks
+                    m = re.findall(r"[\[\(\{](\d+)[\]\)\}]", q_text)
+                    marks.append(int(m[0]) if m else None)
+                q_text = line.strip()
+            elif len(line.strip()) > 20:
+                q_text += " " + line.strip()
+            elif len(line.strip()) <= 20 and q_text: # short line continuation
+                q_text += " " + line.strip()
+        if q_text:
+            questions.append(q_text.strip())
+            years.append(year)
+            m = re.findall(r"[\[\(\{](\d+)[\]\)\}]", q_text)
+            marks.append(int(m[0]) if m else None)
+    return questions, years, marks
+
+def load_chapters(subject_name):
+    subject_folder = os.path.join(Config.CHAPTER_JSON_DIR, subject_name)
+    chapters = []
+    for file_name in os.listdir(subject_folder):
+        if file_name.endswith(".json"):
+            path = os.path.join(subject_folder, file_name)
+            with open(path, "r", encoding="utf-8") as f:
+                chapters.extend(json.load(f))
+    return chapters
+
+def _build_chapter_text(chap: dict) -> str:
+    parts = []
+    parts.append(chap.get("chapter_name", ""))
+    parts.extend(chap.get("keywords", []))
+    for s in chap.get("subtopics", []):
+        parts.append(s.get("subtopic_name", ""))
+        parts.extend(s.get("keywords", []))
+        para = s.get("paragraph", "")
+        if para:
+            parts.append(para[:300])
+    return " ".join(p for p in parts if p).strip()
 
 
-def get_chapter_list(syllabus_data: dict) -> list:
-    """Extract chapter list from syllabus data."""
-    chapters = syllabus_data.get("chapters", [])
-    return [
-        {
-            "chapter_id": ch.get("chapter_id"),
-            "chapter_name": ch.get("chapter_name", ""),
-        }
-        for ch in chapters
+def assign_chapters_to_questions(subject_name, questions):
+    chapters = load_chapters(subject_name)
+    model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+
+    chapter_texts = [_build_chapter_text(c) for c in chapters]
+    chapter_embeddings = model.encode(chapter_texts, convert_to_tensor=True, device=device)
+
+    question_texts = [q["question"] for q in questions]
+    question_embeddings = model.encode(question_texts, convert_to_tensor=True, device=device)
+
+    cosine_scores = util.cos_sim(question_embeddings, chapter_embeddings).cpu()
+
+    assigned = []
+    for q_idx in range(len(question_texts)):
+        best_idx = int(np.argmax(cosine_scores[q_idx]))
+        chap = chapters[best_idx]
+        assigned.append({"chapter_id": chap["chapter_id"], "chapter_name": chap["chapter_name"]})
+
+    return assigned
+
+def cluster_similar_questions(questions, threshold=0.7):
+    model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+    embeddings = model.encode([q["question"] for q in questions], convert_to_tensor=True, device=device)
+    sim_matrix = util.cos_sim(embeddings, embeddings).cpu().numpy()
+    distance_matrix = 1 - sim_matrix
+    clustering = AgglomerativeClustering(metric='precomputed', linkage='complete', distance_threshold=1-threshold, n_clusters=None)
+    labels = clustering.fit_predict(distance_matrix)
+    clusters = {}
+    for idx, label in enumerate(labels):
+        clusters.setdefault(label, []).append(idx)
+    return clusters
+
+def create_question_json(subject_name, questions, years, marks):
+    output_dir = os.path.join(Config.QUESTION_JSON_DIR, subject_name)
+    os.makedirs(output_dir, exist_ok=True)
+    save_path = os.path.join(output_dir, f"{subject_name}_questions.json")
+
+    # Step 1: Prepare new flat question list
+    new_question_list = [
+        {"question": q, "year": y, "mark": m}
+        for q, y, m in zip(questions, years, marks)
     ]
 
+    # Step 2: If file exists, load old data and flatten it
+    if os.path.exists(save_path):
+        with open(save_path, "r", encoding="utf-8") as f:
+            existing_clusters = json.load(f)
 
-QUESTION_EXTRACTION_PROMPT = """You are a question extraction engine for past exam papers.
+        old_flat_questions = []
+        for cluster in existing_clusters:
+            for i in range(len(cluster["years"])):
+                old_flat_questions.append({
+                    "question": cluster["question"],
+                    "year": cluster["years"][i],
+                    "mark": cluster["marks"][i],
+                    "chapter_id": cluster["chapter_id"][i],
+                    "chapter_name": cluster["chapter_name"][i],
+                })
 
-Given raw text from a past exam paper, extract EVERY question.
-
-For each question, return:
-- "question": the full question text (clean it up, remove question numbers)
-- "marks": integer marks if visible, otherwise null
-- "year": the exam year if detectable from the document, otherwise null
-- "section": the section label if visible (e.g., "A", "B", "Part I"), otherwise null
-
-Return ONLY valid JSON (no markdown fences):
-{
-  "year": "2023" or null,
-  "questions": [
-    {
-      "question": "...",
-      "marks": 5 or null,
-      "section": "A" or null
-    }
-  ]
-}
-
-Rules:
-- Extract ALL questions, including sub-questions (a, b, c etc.) as separate entries
-- Remove leading numbers/letters like "1.", "a)", "Q1" from the question text
-- Preserve technical terms, formulas, and specific details
-- If you see "OR" between questions, treat each alternative as a separate question
-- Return ONLY the JSON object"""
-
-
-CHAPTER_MAPPING_PROMPT = """You are a chapter classification engine.
-
-Given a list of chapters from a syllabus and a question from an exam paper, determine which chapter(s) the question belongs to.
-
-Chapters:
-{chapters}
-
-Question: {question}
-
-Return ONLY valid JSON (no markdown fences):
-{{
-  "chapter_ids": [1, 2]
-}}
-
-Rules:
-- A question can belong to multiple chapters
-- Use ONLY chapter IDs from the provided list
-- If unsure, pick the most likely chapter
-- Return ONLY the JSON object"""
-
-
-def extract_questions_from_text(raw_text: str) -> dict:
-    """Use LLM to extract questions from past paper text."""
-    chunks = []
-    max_chunk = 3000
-    if len(raw_text) > max_chunk:
-        lines = raw_text.split("\n")
-        current_chunk = ""
-        for line in lines:
-            if len(current_chunk) + len(line) > max_chunk:
-                chunks.append(current_chunk)
-                current_chunk = line
-            else:
-                current_chunk += "\n" + line
-        if current_chunk.strip():
-            chunks.append(current_chunk)
+        # Merge old + new
+        question_list = old_flat_questions + new_question_list
     else:
-        chunks = [raw_text]
+        question_list = new_question_list
 
-    all_questions = []
-    detected_year = None
+    # Step 3: Assign chapters ONLY to new ones (optimization)
+    assigned = assign_chapters_to_questions(subject_name, question_list)
+    for q, a in zip(question_list, assigned):
+        q.update(a)
 
-    for i, chunk in enumerate(chunks):
-        max_retries = 3
-        base_delay = 3
+    # Step 4: Re-cluster everything
+    clusters = cluster_similar_questions(question_list, threshold=0.7)
 
-        for attempt in range(max_retries):
-            try:
-                resp = client.chat.completions.create(
-                    model=MODEL_NAME,
-                    messages=[
-                        {"role": "system", "content": QUESTION_EXTRACTION_PROMPT},
-                        {"role": "user", "content": f"Extract questions from this exam paper text:\n\n{chunk}"},
-                    ],
-                    temperature=0,
-                    max_tokens=4000,
-                )
-                time.sleep(base_delay)
+    final_json_list = []
 
-                content = resp.choices[0].message.content.strip()
-                content = re.sub(r"^```(?:json)?\s*", "", content)
-                content = re.sub(r"\s*```$", "", content)
+    for cluster_indices in clusters.values():
+        cluster_questions = [question_list[idx] for idx in cluster_indices]
 
-                data = json.loads(content)
-                if data.get("year") and not detected_year:
-                    detected_year = str(data["year"])
-
-                for q in data.get("questions", []):
-                    q_text = q.get("question", "").strip()
-                    if q_text and len(q_text) > 10:
-                        all_questions.append({
-                            "question": q_text,
-                            "marks": q.get("marks"),
-                            "section": q.get("section"),
-                        })
-                break
-
-            except json.JSONDecodeError:
-                logger.warning(f"Non-JSON response for chunk {i+1}")
-                break
-            except Exception as e:
-                err_str = str(e).lower()
-                if "429" in err_str or "rate limit" in err_str:
-                    wait = base_delay * (2 ** attempt)
-                    logger.info(f"Rate-limited, waiting {wait}s ...")
-                    time.sleep(wait)
-                    continue
-                logger.error(f"LLM extraction failed for chunk {i+1}: {e}")
-                break
-
-    return {
-        "year": detected_year,
-        "questions": all_questions,
-    }
-
-
-def map_questions_to_chapters(questions: list, chapters: list) -> list:
-    """Use LLM to map each question to chapter(s)."""
-    if not chapters:
-        logger.warning("No chapters provided for mapping. Skipping.")
-        return questions
-
-    chapter_text = "\n".join(
-        f"  Chapter {ch['chapter_id']}: {ch['chapter_name']}"
-        for ch in chapters
-    )
-
-    mapped = []
-    base_delay = 3
-
-    for i, q in enumerate(questions):
-        max_retries = 3
-        chapter_ids = []
-
-        for attempt in range(max_retries):
-            try:
-                prompt = CHAPTER_MAPPING_PROMPT.format(
-                    chapters=chapter_text,
-                    question=q["question"][:500],
-                )
-                resp = client.chat.completions.create(
-                    model=MODEL_NAME,
-                    messages=[
-                        {"role": "system", "content": "You are a chapter classification engine. Return only JSON."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    temperature=0,
-                    max_tokens=200,
-                )
-                time.sleep(base_delay)
-
-                content = resp.choices[0].message.content.strip()
-                content = re.sub(r"^```(?:json)?\s*", "", content)
-                content = re.sub(r"\s*```$", "", content)
-
-                data = json.loads(content)
-                chapter_ids = data.get("chapter_ids", [])
-                break
-
-            except json.JSONDecodeError:
-                logger.warning(f"Non-JSON for question {i+1} mapping")
-                break
-            except Exception as e:
-                err_str = str(e).lower()
-                if "429" in err_str or "rate limit" in err_str:
-                    wait = base_delay * (2 ** attempt)
-                    logger.info(f"Rate-limited, waiting {wait}s ...")
-                    time.sleep(wait)
-                    continue
-                logger.error(f"Chapter mapping failed for question {i+1}: {e}")
-                break
-
-        mapped.append({
-            **q,
-            "chapter_id": chapter_ids,
+        final_json_list.append({
+            "freq": len(cluster_questions),
+            "question": cluster_questions[0]["question"],
+            "years": [q["year"] for q in cluster_questions],
+            "marks": [q["mark"] for q in cluster_questions],
+            "chapter_id": [q["chapter_id"] for q in cluster_questions],
+            "chapter_name": [q["chapter_name"] for q in cluster_questions]
         })
 
-    return mapped
+    # Step 5: Save (overwrite with merged version)
+    with open(save_path, "w", encoding="utf-8") as f:
+        json.dump(final_json_list, f, ensure_ascii=False, indent=4)
+
+    print(f"Updated question JSON saved to {save_path}")
+
+    return final_json_list
 
 
-def merge_questions(existing: list, new_questions: list, year: str = None) -> list:
-    """Merge new questions into existing, updating frequency and years."""
-    q_lookup = {}
-    for q in existing:
-        key = re.sub(r"\s+", " ", q["question"].lower().strip())
-        q_lookup[key] = q
 
-    for nq in new_questions:
-        key = re.sub(r"\s+", " ", nq["question"].lower().strip())
-        if key in q_lookup:
-            eq = q_lookup[key]
-            eq["freq"] = eq.get("freq", 1) + 1
-            if year and year not in eq.get("years", []):
-                eq.setdefault("years", []).append(year)
-            new_marks = nq.get("marks")
-            if new_marks is not None:
-                eq.setdefault("marks", []).append(new_marks)
-            for cid in nq.get("chapter_id", []):
-                if cid not in eq.get("chapter_id", []):
-                    eq.setdefault("chapter_id", []).append(cid)
-        else:
-            entry = {
-                "question": nq["question"],
-                "chapter_id": nq.get("chapter_id", []),
-                "freq": 1,
-                "years": [year] if year else [],
-                "marks": [nq["marks"]] if nq.get("marks") is not None else [],
-                "section": nq.get("section"),
-            }
-            q_lookup[key] = entry
-
-    return list(q_lookup.values())
-
-
-def process_raw_and_questions(subject_name: str, raw_text_path: str) -> dict:
-    """
-    Main entry: extract questions from raw text, map to chapters, merge, save.
-    """
-    if not os.path.isfile(raw_text_path):
-        raise FileNotFoundError(f"Raw text file not found: {raw_text_path}")
-
-    with open(raw_text_path, "r", encoding="utf-8") as f:
+def process_raw_and_questions(subject_name: str, input_file_path: str):
+    # Read raw
+    with open(input_file_path, "r", encoding="utf-8") as f:
         raw_text = f.read()
+    # Fix OCR
+    text = fix_common_ocr_errors(raw_text)
+    # Remove headers
+    text = remove_headers(text)
+    # Debug
+    print("DEBUG SAMPLE TEXT:\n", text[:500])
+    # Split by year
+    year_sections = split_by_year(text)
+    if not year_sections:
+        print("No year sections found.")
+        return
+    final_sections = []
+    for section in year_sections:
+        cleaned = clean_with_llm(section)
+        final_sections.append(cleaned)
+    # Save cleaned
+    output_dir = os.path.join(Config.CLEANED_TEXT_DIR, subject_name, "past_paper")
+    os.makedirs(output_dir, exist_ok=True)
+    file_name = os.path.basename(input_file_path)
+    save_path = os.path.join(output_dir, file_name)
+    with open(save_path, "w", encoding="utf-8") as f:
+        f.write("\n\n".join(final_sections))
+    print(f"Saved cleaned file to {save_path}")
+    # Extract questions
+    questions, years, marks = extract_questions("\n\n".join(final_sections))
+    existing_years = get_existing_years(subject_name)
 
-    if not raw_text.strip():
-        raise ValueError("Raw text file is empty.")
+    filtered_questions = []
+    filtered_years = []
+    filtered_marks = []
 
-    logger.info(f"Extracting questions from: {raw_text_path}")
+    for q, y, m in zip(questions, years, marks):
+        if y in existing_years:
+            print(f"Skipping existing year: {y}")
+            continue
 
-    extraction = extract_questions_from_text(raw_text)
-    questions = extraction["questions"]
-    detected_year = extraction.get("year")
+        filtered_questions.append(q)
+        filtered_years.append(y)
+        filtered_marks.append(m)
 
-    if not questions:
-        logger.warning("No questions extracted from the past paper.")
-        return {
-            "success": True,
-            "message": "No questions could be extracted.",
-            "questions_extracted": 0,
-        }
+    if not filtered_questions:
+        print("All cleaned years already exist. Nothing new to add.")
+        return
 
-    logger.info(f"Extracted {len(questions)} questions, year: {detected_year}")
+    # Replace original lists with filtered ones
+    questions = filtered_questions
+    years = filtered_years
+    marks = filtered_marks
 
-    syllabus_data = load_syllabus_json(subject_name)
-    chapters = get_chapter_list(syllabus_data)
+    # Create JSON
+    final_json = create_question_json(subject_name, questions, years, marks)
+    return final_json
 
-    if chapters:
-        logger.info(f"Mapping questions to {len(chapters)} chapters...")
-        questions = map_questions_to_chapters(questions, chapters)
-    else:
-        logger.warning(f"No syllabus chapters found for '{subject_name}'. "
-                       f"Questions will not be mapped to chapters.")
-        for q in questions:
-            q["chapter_id"] = []
+def get_existing_years(subject_name):
+    save_path = os.path.join(
+        Config.QUESTION_JSON_DIR,
+        subject_name,
+        f"{subject_name}_questions.json"
+    )
 
-    out_dir = os.path.join(Config.QUESTION_JSON_DIR, subject_name)
-    os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, "questions.json")
+    if not os.path.exists(save_path):
+        return set()
 
-    existing = []
-    if os.path.isfile(out_path):
-        try:
-            with open(out_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                existing = data if isinstance(data, list) else data.get("questions", [])
-        except (json.JSONDecodeError, Exception) as e:
-            logger.warning(f"Could not load existing questions: {e}")
+    with open(save_path, "r", encoding="utf-8") as f:
+        existing_data = json.load(f)
 
-    merged = merge_questions(existing, questions, detected_year)
+    existing_years = set()
+    for cluster in existing_data:
+        existing_years.update(cluster["years"])
 
-    output = {
-        "subject": subject_name,
-        "total_questions": len(merged),
-        "questions": merged,
-    }
+    return existing_years
 
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2, ensure_ascii=False)
 
-    logger.info(f"Saved {len(merged)} questions to: {out_path}")
-
-    return {
-        "success": True,
-        "message": f"Extracted {len(questions)} questions, total: {len(merged)}",
-        "questions_extracted": len(questions),
-        "total_questions": len(merged),
-        "detected_year": detected_year,
-        "output_path": out_path,
-    }
+if __name__ == "__main__":
+    subject_name = "AI"
+    input_file_path = os.path.join(Config.CLEANED_TEXT_DIR, subject_name, "past_paper", "ai_2064_2075.txt")
+    process_raw_and_questions(subject_name, input_file_path)

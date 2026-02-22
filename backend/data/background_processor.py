@@ -1,9 +1,17 @@
+"""
+Background Processor for Marker + Ollama
+Automatically processes uploaded files to generate chapter and question JSONs.
+
+Location: backend/data/background_processor_marker.py
+"""
+
 import os
 import sys
 from pathlib import Path
 from threading import Thread
 import time
 
+# Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import Config
@@ -12,12 +20,16 @@ from data.question_json import QuestionJSONGeneratorMarker
 
 
 class BackgroundProcessorMarker:
+    """Background processor using Marker+Ollama structured data."""
+    
     def __init__(self):
+        """Initialize the background processor."""
         self.chapter_generator = None
         self.question_generator = None
         self.processing = False
     
     def _initialize_generators(self):
+        """Lazy initialization of generators (heavy models)."""
         if self.chapter_generator is None:
             print("Initializing Chapter JSON Generator (Marker+Ollama)...")
             try:
@@ -43,6 +55,13 @@ class BackgroundProcessorMarker:
                 self.question_generator = QuestionJSONGeneratorMarker()
     
     def process_subject_async(self, subject: str):
+        """
+        Process a subject in background thread.
+        Uses Ollama-structured data from upload step.
+        
+        Args:
+            subject: Subject name (e.g., 'AI', 'CN')
+        """
         def _process():
             try:
                 self.processing = True
@@ -52,8 +71,10 @@ class BackgroundProcessorMarker:
                 print(f"BACKGROUND PROCESSING (Marker+Ollama): {subject_upper}")
                 print(f"{'='*70}\n")
                 
+                # Initialize generators
                 self._initialize_generators()
                 
+                # Step 1: Process notes → chapter_json
                 notes_dir = Config.RAW_TEXT_DIR / subject_upper / 'notes'
                 if notes_dir.exists() and any(notes_dir.glob('*.json')):
                     print(f"\n[1/2] Processing NOTES for {subject_upper}...")
@@ -69,6 +90,7 @@ class BackgroundProcessorMarker:
                 
                 time.sleep(2)
                 
+                # Step 2: Process questions → question_json
                 questions_dir = Config.RAW_TEXT_DIR / subject_upper / 'questions'
                 if questions_dir.exists() and any(questions_dir.glob('*.json')):
                     print(f"\n[2/2] Processing QUESTIONS for {subject_upper}...")
@@ -92,12 +114,14 @@ class BackgroundProcessorMarker:
                 traceback.print_exc()
             finally:
                 self.processing = False
-
+        
+        # Run in background thread
         thread = Thread(target=_process, daemon=True)
         thread.start()
         print(f"✓ Background processing started for {subject}")
     
     def process_all_subjects_async(self):
+        """Process all subjects in background."""
         def _process_all():
             try:
                 self.processing = True
@@ -111,7 +135,8 @@ class BackgroundProcessorMarker:
                 if not subject_dirs:
                     print("✗ No subjects found")
                     return
-
+                
+                # Initialize generators
                 self._initialize_generators()
                 
                 for subject_dir in subject_dirs:
@@ -121,12 +146,14 @@ class BackgroundProcessorMarker:
                     print(f"PROCESSING: {subject}")
                     print(f"{'='*70}\n")
                     
+                    # Process notes
                     try:
                         chapter_count = self.chapter_generator.process_subject_notes(subject)
                         print(f"✓ {subject}: {chapter_count} chapters")
                     except Exception as e:
                         print(f"✗ {subject} notes error: {e}")
                     
+                    # Process questions
                     try:
                         question_count = self.question_generator.process_subject_questions(subject)
                         print(f"✓ {subject}: {question_count} question clusters")
@@ -146,6 +173,7 @@ class BackgroundProcessorMarker:
             finally:
                 self.processing = False
         
+        # Run in background thread
         thread = Thread(target=_process_all, daemon=True)
         thread.start()
         print("✓ Batch background processing started")
@@ -155,6 +183,7 @@ class BackgroundProcessorMarker:
         return self.processing
 
 
+# Global instance
 _processor = None
 
 def get_processor() -> BackgroundProcessorMarker:
@@ -166,6 +195,13 @@ def get_processor() -> BackgroundProcessorMarker:
 
 
 def trigger_processing(subject: str):
+    """
+    Trigger background processing for a subject.
+    Call this after file upload.
+    
+    Args:
+        subject: Subject name
+    """
     processor = get_processor()
     if not processor.is_processing():
         processor.process_subject_async(subject)
@@ -174,6 +210,7 @@ def trigger_processing(subject: str):
 
 
 def main():
+    """CLI for manual background processing."""
     import argparse
     
     parser = argparse.ArgumentParser(description='Background processor (Marker+Ollama)')

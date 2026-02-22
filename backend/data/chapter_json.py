@@ -281,6 +281,9 @@ def extract_topics_from_text(text: str, chapter_id: int) -> Dict[str, str]:
             return normalized
     return {}
 
+
+# ─── FIX 3: sort by integer parts to handle 1.10 correctly ──────────────────
+
 def _subtopic_sort_key(subtopic_id: str) -> List[int]:
     try:
         return [int(x) for x in subtopic_id.split(".")]
