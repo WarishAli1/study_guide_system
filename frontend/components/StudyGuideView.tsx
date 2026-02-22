@@ -23,32 +23,36 @@ interface Props {
     session: Session;
 }
 
+function resolveDisplayTitle(report: StudyGuideReport | null, sessionName: string): string {
+    if (!report) return sessionName;
+    const name = report.subject_name;
+    if (
+        name &&
+        typeof name === "string" &&
+        name.trim().length > 0 &&
+        name.trim().toLowerCase() !== "general" &&
+        name.trim().toLowerCase() !== "default"
+    ) {
+        return name.trim();
+    }
+    return sessionName;
+}
+
 export default function StudyGuideView({ session }: Props) {
     const { setActiveView, setCachedGuide } = useSessionStore();
     const [report, setReport] = useState<StudyGuideReport | null>(
         session.cachedGuide
     );
-    if (!report) return null;
-    
-    const sortedChapters = report.chapters.sort((a, b) => {
-        const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
-        const priorityDiff = priorityOrder[b.study_priority] - priorityOrder[a.study_priority];
-        if (priorityDiff !== 0) return priorityDiff;
-        return b.importance_score - a.importance_score;
-    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const hasSyllabus = session.documents.some(
-        (d) => d.type === "syllabus" && d.status === "success"
-    );
     const hasPastPapers = session.documents.some(
         (d) => d.type === "past_paper" && d.status === "success"
     );
-    
-    // Use the session name as the subject
+
     const subjectName = session.name;
 
+    // Sync with session cache
     useEffect(() => {
         if (session.cachedGuide && !report) {
             setReport(session.cachedGuide);
@@ -86,7 +90,7 @@ export default function StudyGuideView({ session }: Props) {
         setError(null);
         try {
             const res = await guideAPI.regenerate(subjectName);
-            saveReport(res.data.report as StudyGuideReport);
+            saveReport(res.data as StudyGuideReport);
             toast.success("Study guide regenerated");
         } catch (err: any) {
             const detail = err?.response?.data?.detail;
@@ -101,31 +105,57 @@ export default function StudyGuideView({ session }: Props) {
         }
     };
 
-    if (!hasSyllabus) {
+    // --- Loading (no report yet) ---
+    if (loading && !report) {
         return (
-            <div className="flex-1 overflow-y-auto">
-                <div className="max-w-2xl mx-auto px-6 py-16 text-center">
-                    <AlertCircle className="w-8 h-8 text-neutral-300 mx-auto mb-3" />
-                    <h3 className="text-base font-medium text-neutral-700 mb-1">
-                        Syllabus Required
-                    </h3>
-                    <p className="text-sm text-neutral-400 max-w-sm mx-auto mb-4">
-                        Upload a syllabus document to generate the study guide.
-                        Past paper uploads are recommended for question frequency analysis.
-                    </p>
-                    <button
-                        onClick={() => setActiveView("documents")}
-                        className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-sm
-                       font-medium hover:bg-neutral-800 transition-colors"
-                    >
-                        Upload Documents
-                    </button>
+            <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-neutral-400 mx-auto mb-3" />
+                    <p className="text-sm text-neutral-500">Generating study guide...</p>
+                    <p className="text-xs text-neutral-400 mt-1">This may take a moment</p>
                 </div>
             </div>
         );
     }
 
-    if (!report && !loading && !error) {
+    // --- Error (no report) ---
+    if (error && !report) {
+        return (
+            <div className="flex-1 overflow-y-auto">
+                <div className="max-w-2xl mx-auto px-6 py-16 text-center">
+                    <AlertCircle className="w-8 h-8 text-red-300 mx-auto mb-3" />
+                    <h3 className="text-base font-medium text-neutral-700 mb-1">
+                        Generation Failed
+                    </h3>
+                    <p className="text-sm text-red-500 max-w-md mx-auto mb-4">{error}</p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button
+                            onClick={() => handleGenerate(false)}
+                            className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-sm
+                                   font-medium hover:bg-neutral-800 transition-colors"
+                        >
+                            Retry
+                        </button>
+                        <button
+                            onClick={() => setActiveView("documents")}
+                            className="px-4 py-2 rounded-lg border border-neutral-300 text-neutral-700 text-sm
+                                   font-medium hover:bg-neutral-50 transition-colors"
+                        >
+                            Go to Documents
+                        </button>
+                    </div>
+                    {error.toLowerCase().includes("syllabus") && (
+                        <p className="text-xs text-neutral-400 mt-4">
+                            Make sure your syllabus document is uploaded and processed successfully.
+                        </p>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // --- No report, not loading, no error: show generate button (initial state) ---
+    if (!report) {
         return (
             <div className="flex-1 overflow-y-auto">
                 <div className="max-w-2xl mx-auto px-6 py-16 text-center">
@@ -137,11 +167,6 @@ export default function StudyGuideView({ session }: Props) {
                         Generate a study guide with chapter analysis,
                         question frequency, and time allocation.
                     </p>
-                    {!hasPastPapers && (
-                        <p className="text-xs text-amber-600 mb-4">
-                            Past papers not uploaded. Question frequency will be unavailable.
-                        </p>
-                    )}
                     <button
                         onClick={() => handleGenerate(true)}
                         disabled={loading}
@@ -158,48 +183,18 @@ export default function StudyGuideView({ session }: Props) {
         );
     }
 
-    if (loading && !report) {
-        return (
-            <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-neutral-400 mx-auto mb-3" />
-                    <p className="text-sm text-neutral-500">Generating study guide...</p>
-                    <p className="text-xs text-neutral-400 mt-1">This may take a moment</p>
-                </div>
-            </div>
-        );
-    }
+    // --- Report exists: render content ---
 
-    if (error && !report) {
-        return (
-            <div className="flex-1 overflow-y-auto">
-                <div className="max-w-2xl mx-auto px-6 py-16 text-center">
-                    <AlertCircle className="w-8 h-8 text-red-300 mx-auto mb-3" />
-                    <h3 className="text-base font-medium text-neutral-700 mb-1">
-                        Generation Failed
-                    </h3>
-                    <p className="text-sm text-red-500 max-w-md mx-auto mb-4">{error}</p>
-                    <button
-                        onClick={() => handleGenerate(false)}
-                        className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-sm
-                       font-medium hover:bg-neutral-800 transition-colors"
-                    >
-                        Retry
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    // Sort chapters by priority (HIGH > MEDIUM > LOW) then importance
+    const sortedChapters = [...report.chapters].sort((a, b) => {
+        const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+        const priorityDiff =
+            priorityOrder[b.study_priority] - priorityOrder[a.study_priority];
+        if (priorityDiff !== 0) return priorityDiff;
+        return b.importance_score - a.importance_score;
+    });
 
-    if (!report) return null;
-
-    // Use report.subject_name if available and meaningful, otherwise session name
-    const displayTitle =
-        report.subject_name &&
-        report.subject_name.trim().toLowerCase() !== "general" &&
-        report.subject_name.trim().toLowerCase() !== "default"
-            ? report.subject_name.trim()
-            : session.name;
+    const displayTitle = resolveDisplayTitle(report, session.name);
 
     return (
         <div className="flex-1 overflow-y-auto">
@@ -239,6 +234,7 @@ export default function StudyGuideView({ session }: Props) {
                     </div>
                 )}
 
+                {/* Summary Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
                     <SummaryCard
                         icon={<BookOpen className="w-4 h-4" />}
@@ -262,6 +258,7 @@ export default function StudyGuideView({ session }: Props) {
                     />
                 </div>
 
+                {/* Chapter List */}
                 <div className="space-y-3">
                     {sortedChapters.map((ch) => (
                         <ChapterCard key={ch.chapter_id} chapter={ch} />
@@ -303,6 +300,11 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
         LOW: "bg-neutral-100 text-neutral-500",
     };
 
+    const studyPriority = chapter.study_priority;
+    const recommendedHours = chapter.recommended_study;
+    const importantTopics = chapter.important_topics || [];
+    const faq = chapter.faq || [];
+
     return (
         <div className="border border-neutral-200 rounded-lg overflow-hidden">
             <button
@@ -328,6 +330,12 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
+                    {recommendedHours && (
+                        <span className="text-xs text-neutral-400 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {recommendedHours.replace("hours", "h").replace("hour", "h")}
+                        </span>
+                    )}
                     {chapter.total_past_questions > 0 && (
                         <span className="text-xs text-neutral-400 flex items-center gap-1">
                             <HelpCircle className="w-3 h-3" />
@@ -335,10 +343,10 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                         </span>
                     )}
                     <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded ${priorityStyles[chapter.study_priority]
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded ${priorityStyles[studyPriority]
                             }`}
                     >
-                        {chapter.study_priority}
+                        {studyPriority}
                     </span>
                     <span className="text-xs font-mono text-neutral-500 w-8 text-right">
                         {chapter.importance_score.toFixed(1)}
@@ -356,20 +364,20 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                             <span>Marks: {chapter.marks_distribution}</span>
                         )}
                         <span>Importance: {chapter.importance_score.toFixed(1)}/10</span>
-                        <span>Study Time: {chapter.recommended_study}</span>
+                        <span>Study Time: {recommendedHours}</span>
                     </div>
 
-                    {chapter.important_topics.length > 0 && (
+                    {importantTopics.length > 0 && (
                         <div>
                             <h4 className="text-xs font-medium text-neutral-700 uppercase tracking-wider mb-2">
                                 Important Topics
                             </h4>
                             <div className="flex flex-wrap gap-1.5">
-                                {chapter.important_topics.map((t, i) => (
+                                {importantTopics.map((t, i) => (
                                     <span
                                         key={i}
                                         className="inline-block px-2 py-0.5 rounded text-xs
-                               bg-neutral-100 text-neutral-600"
+                                               bg-neutral-100 text-neutral-600"
                                     >
                                         {t}
                                     </span>
@@ -378,7 +386,7 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                         </div>
                     )}
 
-                    {chapter.faq.length > 0 && (
+                    {faq.length > 0 && (
                         <div>
                             <h4 className="text-xs font-medium text-neutral-700 uppercase tracking-wider mb-2">
                                 Questions by Frequency
@@ -402,13 +410,13 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-neutral-100">
-                                        {chapter.faq.map((q, i) => {
+                                        {faq.map((q, i) => {
                                             const validMarks = (q.marks || []).filter(
                                                 (m): m is number => m != null
                                             );
                                             const markDisplay =
                                                 validMarks.length > 0
-                                                    ? Array.from(new Set(validMarks.map(String))).join(", ")
+                                                    ? [...new Set(validMarks.map(String))].join(", ")
                                                     : "\u2014";
 
                                             const years = (q.years || []).map((y) => String(y));
@@ -423,7 +431,6 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                                                     key={i}
                                                     className="hover:bg-neutral-50 transition-colors"
                                                 >
-                                                    {/* Question cell - now with wrapping and no truncation */}
                                                     <td className="px-3 py-2 text-neutral-700 leading-relaxed break-words">
                                                         {q.question}
                                                     </td>
@@ -455,7 +462,7 @@ function ChapterCard({ chapter }: { chapter: GuideChapter }) {
                         </div>
                     )}
 
-                    {chapter.faq.length === 0 && (
+                    {faq.length === 0 && (
                         <p className="text-xs text-neutral-400">
                             No past paper questions mapped to this chapter.
                         </p>

@@ -65,7 +65,8 @@ def _subject_exists(subject_name: str) -> bool:
 
 def _require_subject(subject_name: str):
     if not _subject_exists(subject_name):
-        raise HTTPException(status_code=404, detail=f"Subject '{subject_name}' not found.")
+        raise HTTPException(status_code=404, detail=f"Required data for '{subject_name}' is missing. "
+                      "Please ensure all necessary documents are uploaded and processed.")
 
 
 @router.get("/subjects")
@@ -86,7 +87,6 @@ def list_subjects() -> list[SubjectInfo]:
         for name in sorted(all_names)
     ]
 
-
 @router.get("/report/{subject_name}")
 def get_report(subject_name: str, use_cache: bool = Query(default=False)) -> JSONResponse:
     _require_subject(subject_name)
@@ -97,9 +97,24 @@ def get_report(subject_name: str, use_cache: bool = Query(default=False)) -> JSO
     try:
         report = generate_report(subject_name, save=True)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        # Convert technical errors to user-friendly messages
+        if "Syllabus JSON not found" in str(e):
+            detail = (
+                f"Syllabus for '{subject_name}' has not been processed yet. "
+                "Please upload a syllabus document and wait a few moments for processing, "
+                "then try again."
+            )
+        elif "Chapter JSON not found" in str(e):
+            detail = (
+                f"Chapter data for '{subject_name}' is missing. "
+                "This usually happens when the syllabus processing is incomplete. "
+                "Please re-upload your syllabus or check that it was parsed correctly."
+            )
+        else:
+            detail = str(e)
+        raise HTTPException(status_code=404, detail=detail)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
     return JSONResponse(content=report)
 
 
