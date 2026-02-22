@@ -17,3 +17,5 @@ KeyBERT
 torch
 openai
 sentence-transformers
+httpx
+PyJWT
