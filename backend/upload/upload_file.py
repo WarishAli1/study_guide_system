@@ -387,6 +387,8 @@ async def delete_uploads_by_subject_doc(subject_name: str, doc_type: str):
         deleted_paths.append(json_path)
 
     if not deleted_paths:
-        raise HTTPException(status_code=404, detail="No folders found for the given subject/doc_type")
-
+        return {
+            "status": "already_deleted",
+            "message": "No folders found. Data was already deleted."
+        }
     return {"status": "deleted", "paths": deleted_paths}
