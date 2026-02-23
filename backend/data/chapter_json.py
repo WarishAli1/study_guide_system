@@ -29,6 +29,22 @@ HEADER_PATTERNS = [
     r"printing", r"^\s*[-_=]{3,}\s*$",
 ]
 
+NOISE_SUBTOPIC_PATTERNS = [
+    r"^course\s+objectives?$",r"^course\s+contents?$",r"^course\s+outline$",
+    r"^references?$",r"^bibliography$",r"^evaluation$",r"^grading$",
+    r"^assessment$",r"^attendance$",r"^lab\s+work$",
+    r"^assignments?$",r"^syllabus$",r"^prerequisite",
+    r"^textbooks?$",r"^recommended\s+reading",r"^introduction\s+to\s+the\s+course$",
+    r"^marking\s+scheme",r"^schedule$",r"^timetable$",
+]
+
+def _is_noise_subtopic(name: str) -> bool:
+    """Return True if this subtopic name is administrative/syllabus noise."""
+    n = name.strip().lower()
+    n = re.sub(r"^\d+\.\d+\s*", "", n)
+    return any(re.match(p, n) for p in NOISE_SUBTOPIC_PATTERNS)
+
+
 def remove_blank_lines(text: str) -> str:
     lines = [line.strip() for line in text.splitlines()]
     return "\n".join(line for line in lines if line)
@@ -194,9 +210,6 @@ def save_cleaned_chapters(subject_name: str, chapters_data: List[Dict]) -> str:
 def get_subject_slug(subject: str) -> str:
     return re.sub(r"[^\w]+", "_", subject.lower())
 
-
-# ─── KeyBERT ──────────────────────────────────────────────────────────────────
-
 def _get_keybert():
     global _keybert_model
     if _keybert_model is None:
@@ -226,15 +239,9 @@ def extract_keywords(
     )
     return [kw.lower() for kw, _ in results]
 
-
-# ─── FIX 1: weight subtopic name + truncate paragraph ────────────────────────
-
 def _subtopic_keywords(subtopic_name: str, paragraph: str) -> List[str]:
     weighted = f"{subtopic_name} {subtopic_name} {subtopic_name} {paragraph[:800]}"
     return extract_keywords(weighted, top_n=15, ngram_range=(1, 2))
-
-
-# ─── FIX 2: single combined pass for chapter keywords ────────────────────────
 
 def _chapter_keywords(subtopics: List[Dict]) -> List[str]:
     combined = " ".join(
@@ -282,8 +289,6 @@ def extract_topics_from_text(text: str, chapter_id: int) -> Dict[str, str]:
     return {}
 
 
-# ─── FIX 3: sort by integer parts to handle 1.10 correctly ──────────────────
-
 def _subtopic_sort_key(subtopic_id: str) -> List[int]:
     try:
         return [int(x) for x in subtopic_id.split(".")]
@@ -291,11 +296,17 @@ def _subtopic_sort_key(subtopic_id: str) -> List[int]:
         return [0]
 
 def _topics_to_subtopic_list(topics: Dict[str, str], chapter_id: int) -> List[Dict]:
+    """Convert topics dict to subtopic list, filtering out noise entries."""
     result = []
     for key, paragraph in topics.items():
         m             = re.match(r"(\d+\.\d+)\s+(.*)", key.strip())
         subtopic_id   = m.group(1) if m else f"{chapter_id}.1"
         subtopic_name = m.group(2).strip() if m else key.strip()
+
+        if _is_noise_subtopic(subtopic_name):
+            print(f"Skipping noise subtopic: {subtopic_name}")
+            continue
+
         result.append({
             "subtopic_id":   subtopic_id,
             "subtopic_name": subtopic_name,
@@ -319,7 +330,7 @@ def _save_subject_json(json_path: str, chapters: List[Dict]) -> None:
     chapters_sorted = sorted(chapters, key=lambda c: c["chapter_id"])
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(chapters_sorted, f, indent=2, ensure_ascii=False)
-    print(f"  ✓ JSON saved → {json_path}")
+    print(f"JSON saved → {json_path}")
 
 def build_chapter_json(subject_name: str, chapters_data: List[Dict]) -> str:
     subject_folder = os.path.join(Config.CHAPTER_JSON_DIR, subject_name)
@@ -330,11 +341,6 @@ def build_chapter_json(subject_name: str, chapters_data: List[Dict]) -> str:
     save_path    = os.path.join(subject_folder, f"{subject_name}_chapters.json")
 
     existing_chapters = _load_subject_json(save_path)
-    incoming_ids      = {c["chapter_id"] for c in chapters_data}
-    kept_chapters     = [c for c in existing_chapters if c["chapter_id"] not in incoming_ids]
-    dropped           = len(existing_chapters) - len(kept_chapters)
-    if dropped:
-        print(f"  Removed {dropped} existing chapter(s) for fresh rebuild.")
 
     new_entries: List[Dict] = []
 
@@ -362,11 +368,22 @@ def build_chapter_json(subject_name: str, chapters_data: List[Dict]) -> str:
             "subtopics":    subtopics,
             "timestamp":    datetime.now().isoformat(),
         })
-        print(f"  ✚ Chapter {chapter_id} built fresh.")
 
-    final_chapters = kept_chapters + new_entries
+    chapter_map = {c["chapter_id"]: c for c in existing_chapters}
+    for new_chapter in new_entries:
+        cid = new_chapter["chapter_id"]
+
+        if cid in chapter_map:
+            print(f"Smart merging Chapter {cid}")
+            chapter_map[cid] = merge_chapter(chapter_map[cid], new_chapter)
+        else:
+            print(f"Adding new Chapter {cid}")
+            chapter_map[cid] = new_chapter
+
+    final_chapters = list(chapter_map.values())
     _save_subject_json(save_path, final_chapters)
     print(f"\n  ✓ Total chapters in JSON: {len(final_chapters)}")
+
     return save_path
 
 def _read_topics_from_txt(filepath: str, chapter_id: int) -> Dict[str, str]:
@@ -378,6 +395,150 @@ def _read_topics_from_txt(filepath: str, chapter_id: int) -> Dict[str, str]:
     separator_idx = next((i for i, l in enumerate(lines) if re.match(r"^=+$", l.strip())), -1)
     body          = "\n".join(lines[separator_idx + 1:]).strip() if separator_idx >= 0 else content
     return extract_topics_from_text(body, chapter_id)
+
+def _normalize_title(title: str) -> str:
+    title = title.lower()
+    title = re.sub(r"[^a-z0-9\s]", "", title)
+    title = re.sub(r"\s+", " ", title)
+    return title.strip()
+
+def _title_similarity(title1: str, title2: str) -> float:
+    t1 = set(_normalize_title(title1).split())
+    t2 = set(_normalize_title(title2).split())
+    if not t1 or not t2:
+        return 0.0
+    intersection = t1.intersection(t2)
+    union = t1.union(t2)
+    return len(intersection) / len(union)
+
+def _keyword_similarity(k1: List[str], k2: List[str]) -> float:
+    s1 = set(k1)
+    s2 = set(k2)
+    if not s1 or not s2:
+        return 0.0
+    intersection = s1.intersection(s2)
+    union = s1.union(s2)
+    return len(intersection) / len(union)
+
+def _content_similarity(text1: str, text2: str) -> float:
+    """
+    Token-level Jaccard similarity between two paragraph texts.
+    Returns 0.0–1.0. High value → same content, no need for new ID.
+    """
+    if not text1 or not text2:
+        return 0.0
+    words1 = set(re.findall(r"\b\w+\b", text1.lower()))
+    words2 = set(re.findall(r"\b\w+\b", text2.lower()))
+    if not words1 or not words2:
+        return 0.0
+    return len(words1 & words2) / len(words1 | words2)
+
+
+def _generate_next_subtopic_id(merged_subtopics: Dict[str, Dict], chapter_id: int) -> str:
+    existing_ids = []
+    for sid in merged_subtopics.keys():
+        try:
+            parts = sid.split(".")
+            if int(parts[0]) == chapter_id:
+                existing_ids.append(int(parts[1]))
+        except:
+            continue
+    next_num = max(existing_ids, default=0) + 1
+    return f"{chapter_id}.{next_num}"
+
+def _deduplicate_subtopics(subtopics: List[Dict]) -> List[Dict]:
+    """
+    Within a single chapter's subtopic list, if two entries share the same
+    normalized name, keep only the one with more content (longer paragraph).
+    This prevents a topic from being registered under two different IDs just
+    because it appeared twice in the source text.
+    """
+    seen: Dict[str, Dict] = {}
+    for sub in subtopics:
+        key = _normalize_title(sub["subtopic_name"])
+        if key not in seen:
+            seen[key] = sub
+        else:
+            if len(sub.get("paragraph", "")) > len(seen[key].get("paragraph", "")):
+                seen[key] = sub
+    return list(seen.values())
+
+
+def merge_chapter(old_chapter: Dict, new_chapter: Dict) -> Dict:
+    """
+    Merge new_chapter subtopics into old_chapter with content-aware logic:
+
+    Decision tree for each new subtopic:
+      1. Same ID + similar title/keywords + similar content  → update (same topic)
+      2. Same ID + similar title/keywords + DIFFERENT content → keep both (new ID assigned)
+      3. Same ID + different title AND keywords              → ID conflict → new ID
+      4. Different ID but matching title/keywords + similar content → update existing
+      5. Different ID, no match anywhere                     → add as new topic
+    """
+    old_subtopics    = old_chapter["subtopics"]
+    merged_subtopics = {s["subtopic_id"]: s for s in old_subtopics}
+
+    for new_sub in new_chapter["subtopics"]:
+        new_id = new_sub["subtopic_id"]
+
+        if new_id in merged_subtopics:
+            old_sub     = merged_subtopics[new_id]
+            title_sim   = _title_similarity(old_sub["subtopic_name"], new_sub["subtopic_name"])
+            keyword_sim = _keyword_similarity(old_sub.get("keywords", []), new_sub.get("keywords", []))
+            content_sim = _content_similarity(old_sub.get("paragraph", ""), new_sub.get("paragraph", ""))
+
+            if title_sim > 0.6 or keyword_sim > 0.5:
+                if content_sim >= 0.5:
+                    print(f"    ↺ Updated (same content) → {new_sub['subtopic_name']}")
+                    merged_subtopics[new_id] = new_sub
+                else:
+                    new_generated_id = _generate_next_subtopic_id(merged_subtopics, old_chapter["chapter_id"])
+                    new_sub          = dict(new_sub)
+                    new_sub["subtopic_id"] = new_generated_id
+                    merged_subtopics[new_generated_id] = new_sub
+                    print(f"    ✚ New content for same topic → assigned {new_generated_id}: {new_sub['subtopic_name']}")
+            else:
+                new_generated_id = _generate_next_subtopic_id(merged_subtopics, old_chapter["chapter_id"])
+                new_sub          = dict(new_sub)
+                new_sub["subtopic_id"] = new_generated_id
+                merged_subtopics[new_generated_id] = new_sub
+                print(f"    ⚠ ID conflict → assigned new ID {new_generated_id}: {new_sub['subtopic_name']}")
+            continue
+        matched = False
+        for old_id, old_sub in list(merged_subtopics.items()):
+            title_sim   = _title_similarity(old_sub["subtopic_name"], new_sub["subtopic_name"])
+            keyword_sim = _keyword_similarity(old_sub.get("keywords", []), new_sub.get("keywords", []))
+            content_sim = _content_similarity(old_sub.get("paragraph", ""), new_sub.get("paragraph", ""))
+
+            if title_sim > 0.6 or keyword_sim > 0.5:
+                if content_sim >= 0.5:
+                    print(f"    ↺ Merged by similarity (same content) → {new_sub['subtopic_name']}")
+                    merged_subtopics[old_id] = {**new_sub, "subtopic_id": old_id}
+                else:
+                    new_generated_id = _generate_next_subtopic_id(merged_subtopics, old_chapter["chapter_id"])
+                    new_sub          = dict(new_sub)
+                    new_sub["subtopic_id"] = new_generated_id
+                    merged_subtopics[new_generated_id] = new_sub
+                    print(f"    ✚ Similar name, different content → new ID {new_generated_id}: {new_sub['subtopic_name']}")
+                matched = True
+                break
+
+        if not matched:
+            merged_subtopics[new_id] = new_sub
+            print(f"    ✚ Added new topic → {new_sub['subtopic_name']}")
+
+    final_list = list(merged_subtopics.values())
+    final_list = _deduplicate_subtopics(final_list)
+    final_list.sort(key=lambda s: _subtopic_sort_key(s["subtopic_id"]))
+
+    return {
+        "chapter_id":   old_chapter["chapter_id"],
+        "chapter_name": new_chapter["chapter_name"],
+        "keywords":     _chapter_keywords(final_list),
+        "subtopics":    final_list,
+        "timestamp":    datetime.now().isoformat(),
+    }
+
 
 def process_and_save_chapter(subject_name: str, file_path: str):
     if file_path.lower().endswith('.pdf'):
@@ -401,7 +562,7 @@ def process_and_save_chapter(subject_name: str, file_path: str):
     final_chapters = []
 
     for chapter in chapters:
-        cleaned_content      = clean_chapter_with_llm(chapter["content"], chapter["title"])
+        cleaned_content          = clean_chapter_with_llm(chapter["content"], chapter["title"])
         chapter_id, chapter_name = parse_chapter_info(chapter["title"])
         final_chapters.append({
             "chapter_id":     chapter_id,

@@ -69,6 +69,7 @@ export default function StudyGuideView({ session }: Props) {
         setError(null);
         try {
             const res = await guideAPI.generate(subjectName, useCache);
+            console.log("REPORT DATA:", res.data);
             saveReport(res.data as StudyGuideReport);
         } catch (err: any) {
             const detail = err?.response?.data?.detail;
@@ -90,7 +91,8 @@ export default function StudyGuideView({ session }: Props) {
         setError(null);
         try {
             const res = await guideAPI.regenerate(subjectName);
-            saveReport(res.data as StudyGuideReport);
+            console.log("REPORT DATA:", res.data);
+            saveReport(res.data.report as StudyGuideReport);
             toast.success("Study guide regenerated");
         } catch (err: any) {
             const detail = err?.response?.data?.detail;

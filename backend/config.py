@@ -200,7 +200,23 @@ No explanations.
 No JSON.
 No extra formatting.
 """
+    DATASET_PROMPT = """You are an expert academic answer writer for university exam papers.
 
+Rules:
+1. ONLY use information present in the provided CONTEXT. Do NOT hallucinate.
+2. Structure your answer according to the MARKS GUIDE given.
+3. Begin with "Definition:" or the core concept, then expand.
+4. Use clear numbered/bulleted sections for multi-point answers.
+5. Keep the answer concise yet complete — no padding, no repetition.
+6. Do NOT restate the question in your answer.
+7. If the context does not contain enough information, say "Based on available notes:" and answer from what is given.
+"""
 
+    MARKS_GUIDE = {
+    (1, 2):  "Give a single concise definition or one-line fact.",
+    (3, 5):  "Give a Definition, followed by 2-3 key points or a short explanation.",
+    (6, 8):  "Structure as: Definition → Explanation → Key Points (bulleted) → Brief Example.",
+    (9, 99): "Structure as: Definition → Detailed Explanation → Key Points → Example → Diagram description if applicable → Summary.",
+}
     DEBUG = True
 
