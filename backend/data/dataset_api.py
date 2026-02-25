@@ -12,8 +12,6 @@ router = APIRouter()
 COMBINED_DATASET_PATH = os.path.join(Config.DATASETS_DIR, "generated_datasets", "combined_dataset.json")
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
 def _load_combined() -> list:
     if not os.path.exists(COMBINED_DATASET_PATH):
         return []
@@ -43,8 +41,6 @@ def _chapters_exist(subject_name: str) -> bool:
     return os.path.exists(path)
 
 
-# ── Single endpoint ───────────────────────────────────────────────────────────
-
 @router.post("/dataset/generate/{subject_name}")
 def generate_subject_dataset(subject_name: str) -> JSONResponse:
     """
@@ -54,7 +50,6 @@ def generate_subject_dataset(subject_name: str) -> JSONResponse:
     - New subject → generated and appended to combined dataset.
     - Combined dataset grows as you add more subjects over time.
     """
-    # 1. Validate source files exist
     if not _questions_exist(subject_name):
         raise HTTPException(
             status_code=404,
@@ -66,7 +61,6 @@ def generate_subject_dataset(subject_name: str) -> JSONResponse:
             detail=f"Chapters JSON not found for '{subject_name}'. Upload and process chapter notes first."
         )
 
-    # 2. Skip if subject already processed
     if _already_processed(subject_name):
         return JSONResponse(content={
             "status":       "skipped",
@@ -74,7 +68,6 @@ def generate_subject_dataset(subject_name: str) -> JSONResponse:
             "subject_name": subject_name,
         })
 
-    # 3. Generate dataset for this subject
     try:
         new_records = generate_dataset(subject_name=subject_name)
     except RuntimeError as e:
@@ -82,7 +75,6 @@ def generate_subject_dataset(subject_name: str) -> JSONResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
-    # 4. Append plain records (no subject tag) to combined dataset
     combined = _load_combined()
     combined.extend(new_records)
     _save_combined(combined)

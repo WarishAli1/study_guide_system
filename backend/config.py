@@ -36,7 +36,6 @@ class Config:
     REPORTS_DIR = os.path.join(DATASETS_DIR, "reports")  # final reports
     # ── OCR ───────────────────────────────────────────────
     # If tesseract is not on PATH, set the full path here:
-    #   e.g. "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
     TESSERACT_CMD = os.getenv("TESSERACT_CMD", None)
 
     # DPI used when rendering scanned PDF pages for OCR.
@@ -96,12 +95,14 @@ STRICT RULES:
 4. Remove random garbage characters and OCR noise.
 5. Preserve ALL original meaning and technical content.
 6. DO NOT invent topics or headings that don't exist.
-7. If the text has clear subtopics/headings, format them strictly as numbered sections:
-   - For Chapter 1: use 1.1, 1.2, 1.3, etc.
-   - For Chapter 2: use 2.1, 2.2, 2.3, etc.
-   - For Unit 1: use 1.1, 1.2, 1.3, etc.
-   - For Unit 2: use 2.1, 2.2, 2.3, etc.
-   - DO NOT use any symbols like #, ##, *, -, or other Markdown headings. Only numbers followed by a single space and the topic title.
+7. FORMAT ALL HEADINGS as plain numbered sections ONLY. This is MANDATORY:
+   - Use ONLY this format: "2.1 Topic Name" — a number, a dot, a number, a space, then title.
+   - ABSOLUTELY FORBIDDEN: #, ##, ###, **, *, -, or ANY markdown symbols for headings.
+   - ABSOLUTELY FORBIDDEN: Bold text like **Topic Name** for section headings.
+   - Every subtopic MUST start on its own line with its number like: 2.3 Multithreading
+   - Sub-headings under a subtopic (like "Why Threads?") should be written as plain text
+     prefixed with the parent number: e.g., "2.2.1 Why Threads?" or just as a plain paragraph.
+   - If you use ## or ### anywhere, you have FAILED this task.
 8. If NO subtopics/headings exist in the original, just format paragraphs cleanly without inventing topics.
 9. Maintain the chapter/unit number and name exactly as given.
 10. Fix common OCR errors:

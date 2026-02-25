@@ -1,6 +1,3 @@
-"""
-Upload routes – receive files, extract text, persist metadata, and process content.
-"""
 import json
 import os
 import sqlite3
@@ -10,7 +7,6 @@ import logging
 import sys
 from typing import Optional
 
-# Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile

@@ -5,6 +5,8 @@ from auth import login, users
 from upload import upload_file
 from report.api import router as report_router
 from data.dataset_api import router as dataset_router
+from chat.api import router as chat_router
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
@@ -31,6 +33,8 @@ app.include_router(upload_file.router, prefix="/api", tags=["Upload"])
 app.include_router(login.router, prefix="/auth", tags=["Auth"])
 app.include_router(report_router, prefix="/api", tags=["Report"])
 app.include_router(dataset_router, prefix="/api", tags=["Dataset"])
+app.include_router(chat_router, prefix="/api", tags=["Chat"])
+
 
 @app.get("/")
 def home():

@@ -23,11 +23,7 @@ export const authAPI = {
 };
 
 export const uploadAPI = {
-    uploadFile: (
-        file: File,
-        docType: string,
-        subject: string
-    ) => {
+    uploadFile: (file: File, docType: string, subject: string) => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("doc_type", docType);
@@ -36,7 +32,8 @@ export const uploadAPI = {
             headers: { "Content-Type": "multipart/form-data" },
         });
     },
-    deleteUpload: (subject: string, docType: string) => api.delete(`api/uploads/${subject}/${docType}`),
+    deleteUpload: (subject: string, docType: string) =>
+        api.delete(`api/uploads/${subject}/${docType}`),
 };
 
 export const guideAPI = {
@@ -44,13 +41,44 @@ export const guideAPI = {
         api.get(`/api/report/${encodeURIComponent(subjectName)}`, {
             params: { use_cache: useCache },
         }),
-
     regenerate: (subjectName: string) =>
         api.post(`/api/report/${encodeURIComponent(subjectName)}/regenerate`),
-
-    // Optional: for fetching a single chapter's details (not used yet)
     getChapter: (subjectName: string, chapterId: string | number) =>
-        api.get(`/api/report/${encodeURIComponent(subjectName)}/chapter/${chapterId}`),
+        api.get(
+            `/api/report/${encodeURIComponent(subjectName)}/chapter/${chapterId}`
+        ),
+};
+
+export interface ChatRequestPayload {
+    message: string;
+    subject: string;
+    history?: { role: string; content: string }[];
+}
+
+export interface ChatSourceInfo {
+    index: number;
+    chapter_id: number | string;
+    chapter_name: string;
+    subtopic_id: string;
+    subtopic_name: string;
+}
+
+export interface ChatRelatedQuestion {
+    question: string;
+    freq: number;
+    years: string[];
+    marks: number[];
+}
+
+export interface ChatResponseData {
+    answer: string;
+    sources: ChatSourceInfo[];
+    related_questions: ChatRelatedQuestion[];
+}
+
+export const chatAPI = {
+    send: (payload: ChatRequestPayload) =>
+        api.post<ChatResponseData>("/api/chat", payload),
 };
 
 export default api;

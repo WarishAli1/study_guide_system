@@ -9,7 +9,12 @@ import {
     type ReactNode,
 } from "react";
 import { v4 as uuidv4 } from "uuid";
-import type { Session, SessionDocument, StudyGuideReport } from "./types";
+import type {
+    Session,
+    SessionDocument,
+    StudyGuideReport,
+    ChatMessage,
+} from "./types";
 
 export type SessionView = "dashboard" | "documents" | "chat" | "guide";
 
@@ -18,20 +23,36 @@ interface SessionStore {
     activeSessionId: string | null;
     activeView: SessionView;
     sidebarOpen: boolean;
+    pendingChatPrompt: string | null;
     setSidebarOpen: (open: boolean) => void;
     toggleSidebar: () => void;
 
     createSession: (name: string, description: string) => Session;
-    updateSession: (sessionId: string, updates: Partial<Pick<Session, "name" | "description">>) => void;
+    updateSession: (
+        sessionId: string,
+        updates: Partial<Pick<Session, "name" | "description">>
+    ) => void;
     deleteSession: (sessionId: string) => void;
     setActiveSession: (sessionId: string | null) => void;
     setActiveView: (view: SessionView) => void;
 
     addDocument: (sessionId: string, doc: SessionDocument) => void;
-    updateDocument: (sessionId: string, docId: string, updates: Partial<SessionDocument>) => void;
+    updateDocument: (
+        sessionId: string,
+        docId: string,
+        updates: Partial<SessionDocument>
+    ) => void;
     removeDocument: (sessionId: string, docId: string) => void;
 
-    setCachedGuide: (sessionId: string, guide: StudyGuideReport | null) => void;
+    addMessage: (sessionId: string, message: ChatMessage) => void;
+
+    setCachedGuide: (
+        sessionId: string,
+        guide: StudyGuideReport | null
+    ) => void;
+
+    setPendingChatPrompt: (prompt: string | null) => void;
+    navigateToChatWithPrompt: (prompt: string) => void;
 
     getActiveSession: () => Session | undefined;
 }
@@ -56,14 +77,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [activeView, setActiveView] = useState<SessionView>("dashboard");
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [pendingChatPrompt, setPendingChatPrompt] = useState<string | null>(null);
     const [hydrated, setHydrated] = useState(false);
 
     useEffect(() => {
         const loaded = loadFromStorage<Session[]>(STORAGE_KEY, []);
-        // Ensure cachedGuide field exists on older sessions
         const migrated = loaded.map((s) => ({
             ...s,
             cachedGuide: s.cachedGuide ?? null,
+            messages: s.messages ?? [],
         }));
         setSessions(migrated);
         setActiveSessionId(loadFromStorage<string | null>(ACTIVE_SS_KEY, null));
@@ -77,7 +99,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (hydrated) {
-            if (activeSessionId) localStorage.setItem(ACTIVE_SS_KEY, JSON.stringify(activeSessionId));
+            if (activeSessionId)
+                localStorage.setItem(ACTIVE_SS_KEY, JSON.stringify(activeSessionId));
             else localStorage.removeItem(ACTIVE_SS_KEY);
         }
     }, [activeSessionId, hydrated]);
@@ -117,19 +140,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         []
     );
 
-    const deleteSession = useCallback(
-        (sessionId: string) => {
-            setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-            setActiveSessionId((current) => {
-                if (current === sessionId) {
-                    setActiveView("dashboard");
-                    return null;
-                }
-                return current;
-            });
-        },
-        []
-    );
+    const deleteSession = useCallback((sessionId: string) => {
+        setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+        setActiveSessionId((current) => {
+            if (current === sessionId) {
+                setActiveView("dashboard");
+                return null;
+            }
+            return current;
+        });
+    }, []);
 
     const setActiveSessionCb = useCallback((sessionId: string | null) => {
         setActiveSessionId(sessionId);
@@ -192,6 +212,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         []
     );
 
+    const addMessage = useCallback(
+        (sessionId: string, message: ChatMessage) => {
+            const now = new Date().toISOString();
+            setSessions((prev) =>
+                prev.map((s) =>
+                    s.id === sessionId
+                        ? { ...s, messages: [...s.messages, message], updatedAt: now }
+                        : s
+                )
+            );
+        },
+        []
+    );
+
     const setCachedGuide = useCallback(
         (sessionId: string, guide: StudyGuideReport | null) => {
             const now = new Date().toISOString();
@@ -206,6 +240,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         []
     );
 
+    const navigateToChatWithPrompt = useCallback((prompt: string) => {
+        setPendingChatPrompt(prompt);
+        setActiveView("chat");
+    }, []);
+
     const getActiveSession = useCallback(
         () => sessions.find((s) => s.id === activeSessionId),
         [sessions, activeSessionId]
@@ -216,6 +255,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         activeSessionId,
         activeView,
         sidebarOpen,
+        pendingChatPrompt,
         setSidebarOpen,
         toggleSidebar,
         createSession,
@@ -226,7 +266,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         addDocument,
         updateDocument,
         removeDocument,
+        addMessage,
         setCachedGuide,
+        setPendingChatPrompt,
+        navigateToChatWithPrompt,
         getActiveSession,
     };
 

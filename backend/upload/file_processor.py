@@ -1,22 +1,9 @@
-"""
-Document text extraction pipeline.
-
-Digital PDFs  → PyMuPDF  (fast, no external dependency)
-Scanned PDFs  → PyMuPDF renders page to image → pytesseract OCR
-Image files   → Pillow + pytesseract OCR
-
-We deliberately avoid pdf2image (and its poppler system dependency)
-because PyMuPDF can render pages to raster images natively via
-page.get_pixmap().  The only system-level dependency is Tesseract-OCR
-itself, which pytesseract calls as a subprocess.
-"""
-
 import os
 import re
 import logging
 from typing import Optional
 
-import fitz                # PyMuPDF
+import fitz
 from PIL import Image
 import pytesseract
 

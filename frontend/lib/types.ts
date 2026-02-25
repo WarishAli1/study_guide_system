@@ -37,14 +37,30 @@ export interface SessionDocument {
     errorMessage?: string;
 }
 
+export interface ChatSource {
+    index: number;
+    chapter_id: number | string;
+    chapter_name: string;
+    subtopic_id: string;
+    subtopic_name: string;
+}
+
+export interface ChatRelatedQuestion {
+    question: string;
+    freq: number;
+    years: string[];
+    marks: number[];
+}
+
 export interface ChatMessage {
     id: string;
     role: "user" | "assistant";
     content: string;
     timestamp: string;
+    sources?: ChatSource[];
+    relatedQuestions?: ChatRelatedQuestion[];
 }
 
-// ── Study Guide types ──
 
 export interface GuideQuestion {
     question: string;
@@ -60,7 +76,7 @@ export interface GuideChapter {
     marks_distribution: number | null;
     importance_score: number;
     study_priority: "HIGH" | "MEDIUM" | "LOW";
-    recommended_study: string;          // e.g. "15.1 hrs recommended"
+    recommended_study: string;
     important_topics: string[];
     total_subtopics: number;
     total_past_questions: number;
