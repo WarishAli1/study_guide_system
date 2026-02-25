@@ -17,11 +17,19 @@ const VIEW_LABELS: Record<SessionView, string> = {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, isLoading } = useAuth();
-    const { sidebarOpen, toggleSidebar, activeView, getActiveSession } = useSessionStore();
+    const {
+        sidebarOpen,
+        toggleSidebar,
+        activeView,
+        activeConversationId,
+        getActiveSession,
+        getActiveConversation,
+    } = useSessionStore();
     const router = useRouter();
     const [ssModalOpen, setSsModalOpen] = useState(false);
 
     const activeSession = getActiveSession();
+    const activeConv = getActiveConversation();
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -40,8 +48,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Sidebar onCreateSession={() => setSsModalOpen(true)} />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* ── Top bar with breadcrumb ── */}
-                <div className="bg-white border-b border-neutral-100 px-4 py-2 flex items-center gap-2">
+                {/* Top bar with breadcrumb */}
+                <div className="bg-white border-b border-neutral-100 px-4 py-2 flex items-center gap-2 shrink-0">
                     <button
                         onClick={toggleSidebar}
                         className="p-1.5 rounded-lg hover:bg-neutral-100 transition-colors text-neutral-500"
@@ -51,19 +59,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </button>
 
                     {activeSession && (
-                        <div className="flex items-center gap-1.5 text-sm ml-1">
+                        <div className="flex items-center gap-1.5 text-sm ml-1 min-w-0">
                             <span className="font-medium text-neutral-900 truncate max-w-[200px]">
                                 {activeSession.name}
                             </span>
                             <ChevronRight className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
-                            <span className="text-neutral-500">
+                            <span className="text-neutral-500 shrink-0">
                                 {VIEW_LABELS[activeView]}
                             </span>
+                            {activeView === "chat" && activeConv && activeConv.title !== "New Chat" && (
+                                <>
+                                    <ChevronRight className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
+                                    <span className="text-neutral-400 truncate max-w-[200px]">
+                                        {activeConv.title}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
 
-                <main className="flex-1 overflow-y-auto">{children}</main>
+                <main className="flex-1 overflow-hidden min-h-0">{children}</main>
             </div>
 
             <CreateSessionModal
