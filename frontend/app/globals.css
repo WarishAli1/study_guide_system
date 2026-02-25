@@ -59,6 +59,7 @@ a {
   transition: background-color 150ms, color 150ms, border-color 150ms, opacity 150ms;
 }
 
+/* ─── Markdown / Prose ───────────────────────────────────── */
 
 .chat-markdown {
   line-height: 1.7;
@@ -180,6 +181,7 @@ a {
   margin: 0.75rem 0;
 }
 
+/* ─── KaTeX overrides ────────────────────────────────────── */
 
 .chat-markdown .katex-display {
   margin: 0.75rem 0;
@@ -191,6 +193,7 @@ a {
   font-size: 1em;
 }
 
+/* ─── Citation button ────────────────────────────────────── */
 
 .citation-btn {
   display: inline-flex;
@@ -216,30 +219,4 @@ a {
   background: #e5e5e5;
   border-color: #d4d4d4;
   color: #171717;
-}
-
-.citation-popover {
-  position: absolute;
-  z-index: 50;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 260px;
-  background: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  padding: 10px 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
-  font-size: 0.75rem;
-  line-height: 1.5;
-}
-
-.citation-popover::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: #e5e5e5;
 }

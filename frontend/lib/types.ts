@@ -61,6 +61,15 @@ export interface ChatMessage {
     relatedQuestions?: ChatRelatedQuestion[];
 }
 
+export interface ChatConversation {
+    id: string;
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+    messages: ChatMessage[];
+}
+
+// ── Study Guide types ──
 
 export interface GuideQuestion {
     question: string;
@@ -110,6 +119,6 @@ export interface Session {
     createdAt: string;
     updatedAt: string;
     documents: SessionDocument[];
-    messages: ChatMessage[];
+    conversations: ChatConversation[];
     cachedGuide: StudyGuideReport | null;
 }
