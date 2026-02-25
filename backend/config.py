@@ -36,7 +36,6 @@ class Config:
     REPORTS_DIR = os.path.join(DATASETS_DIR, "reports")  # final reports
     # ── OCR ───────────────────────────────────────────────
     # If tesseract is not on PATH, set the full path here:
-    #   e.g. "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
     TESSERACT_CMD = os.getenv("TESSERACT_CMD", None)
 
     # DPI used when rendering scanned PDF pages for OCR.

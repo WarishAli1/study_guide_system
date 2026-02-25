@@ -3,16 +3,25 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { useSessionStore } from "@/lib/session-store";
+import { useSessionStore, type SessionView } from "@/lib/session-store";
 import Sidebar from "@/components/Sidebar";
 import CreateSessionModal from "@/components/CreateSessionModal";
-import { Menu } from "lucide-react";
+import { Menu, ChevronRight } from "lucide-react";
+
+const VIEW_LABELS: Record<SessionView, string> = {
+    dashboard: "Dashboard",
+    documents: "Documents",
+    chat: "Chat",
+    guide: "Study Guide",
+};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, isLoading } = useAuth();
-    const { sidebarOpen, toggleSidebar } = useSessionStore();
+    const { sidebarOpen, toggleSidebar, activeView, getActiveSession } = useSessionStore();
     const router = useRouter();
     const [ssModalOpen, setSsModalOpen] = useState(false);
+
+    const activeSession = getActiveSession();
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -31,7 +40,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Sidebar onCreateSession={() => setSsModalOpen(true)} />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <div className="bg-white border-b border-neutral-100 px-4 py-2 flex items-center">
+                {/* ── Top bar with breadcrumb ── */}
+                <div className="bg-white border-b border-neutral-100 px-4 py-2 flex items-center gap-2">
                     <button
                         onClick={toggleSidebar}
                         className="p-1.5 rounded-lg hover:bg-neutral-100 transition-colors text-neutral-500"
@@ -39,6 +49,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     >
                         <Menu className="w-4 h-4" />
                     </button>
+
+                    {activeSession && (
+                        <div className="flex items-center gap-1.5 text-sm ml-1">
+                            <span className="font-medium text-neutral-900 truncate max-w-[200px]">
+                                {activeSession.name}
+                            </span>
+                            <ChevronRight className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
+                            <span className="text-neutral-500">
+                                {VIEW_LABELS[activeView]}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <main className="flex-1 overflow-y-auto">{children}</main>

@@ -24,7 +24,6 @@ interface Props {
     existingDocuments: SessionDocument[];
 }
 
-// Reordered: Notes first, then Syllabus, then Past Paper
 const DOC_TYPES = [
     { value: "notes", label: "Notes", icon: FileText },
     { value: "syllabus", label: "Syllabus", icon: BookOpen },
