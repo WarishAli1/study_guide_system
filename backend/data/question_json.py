@@ -9,6 +9,8 @@ from config import Config
 import torch
 from openai import OpenAI
 
+CHAPTER_ASSIGNMENT_CONFIDENCE = 0.25
+
 client = OpenAI(
     api_key=Config.GROQ_API_KEY,
     base_url="https://api.groq.com/openai/v1",
@@ -37,16 +39,50 @@ def fix_common_ocr_errors(text: str) -> str:
     }
     for wrong, correct in replacements.items():
         text = re.sub(rf"\b{wrong}\b", correct, text, flags=re.IGNORECASE)
+    
+    text = normalize_brackets(text)
     return text
 
 HEADER_PATTERNS = [
-    r"TRIBHUVAN UNIVERSITY", r"INSTITUTE OF ENGINEERING",
-    r"Examination Control Division", r"Exam\.", r"Level", r"Programme",
-    r"Full Marks", r"Pass Marks", r"Year\s*/?\s*Part", r"Time",
-    r"Candidates are required", r"Attempt All",
-    r"The figures in the margin", r"Assume suitable data",
-    r"\*+", r"^\d+$"
+    r"TRIBHUVAN\s+UNIVERSITY",r"INSTITUTE\s+OF\s+ENGINEERING",r"Examination\s+Control\s+Division",
+    r"^Exam\.",r"^Level\b",r"Programme",r"Full\s+Marks",r"Pass\s+Marks",r"Year\s*/?\s*Part",r"^Time\b",
+    r"Candidates\s+are\s+required",r"Attempt\s+[Aa]ll",r"figures\s+in\s+the\s+margin",r"Assume\s+suitable\s+data",
+    r"Subject\s*[:\-]+\s*.{3,80}\(.*?\)",
+    r"^\*+$",r"^\d+$",r"^\s*-{3,}\s*$",r"^\s*={3,}\s*$",
 ]
+
+def clean_question_text(q: str) -> str:
+    if not q:
+        return q
+    q = re.sub(r'\s*°[^\n]*', ' ', q)
+    q = re.sub(r'(\[\d[\d\+\×xX]*\])\s+[A-Z]{2,8}\b', r'\1', q)
+    q = re.sub(r'\b[A-Z]{2,3}\s*\d{3}\b', '', q)
+    q = re.sub(r'Subject\s*[:\-]+[^\n]*', '', q, flags=re.IGNORECASE)
+    q = re.sub(r'\s{2,}', ' ', q)
+    return q.strip()
+
+def extract_marks(q_text: str):
+    if not q_text:
+        return None
+
+    matches = re.findall(r'\[(\d[\d\+\×xX\s]*)\]', q_text)
+    if not matches:
+        return None
+
+    match = matches[-1].strip()
+    if re.search(r'[×xX]', match):
+        parts = re.split(r'[×xX]', match)
+        nums = [int(p.strip()) for p in parts if p.strip().isdigit()]
+        if len(nums) == 2:
+            return nums[0] * nums[1]
+        return sum(nums) if nums else None
+    if '+' in match:
+        parts = match.split('+')
+        nums = [int(p.strip()) for p in parts if p.strip().isdigit()]
+        return sum(nums) if nums else None
+    if match.isdigit():
+        return int(match)
+    return None
 
 def remove_headers(text: str) -> str:
     lines = text.split("\n")
@@ -56,13 +92,28 @@ def remove_headers(text: str) -> str:
     ]
     return "\n".join(cleaned_lines)
 
+def normalize_brackets(text: str) -> str:
+    def _fix(m):
+        return f"[{m.group(1)}]"
+
+    return re.sub(
+        r'[\[\{\(\|]'           # any opening: [ { ( |
+        r'(\d[\d\+\×xX\*\s]*)' # digits with operators
+        r'[\]\}\)\|]',          # any closing: ] } ) |
+        _fix,
+        text
+    )
+
 def split_by_year(text: str):
+    text = re.sub(r'(20[5-9]\d)\s*\n\s*([A-Za-z]{3,})', r'\1 \2', text)
+    text = re.sub(r'(20[5-9]\d)([A-Z][a-z]{2,})', r'\1 \2', text)
     year_pattern = r"(20[5-9]\d\s+[A-Za-z]{3,})"
     parts = re.split(year_pattern, text)
+
     sections = []
     if len(parts) > 1:
         for i in range(1, len(parts), 2):
-            year = parts[i].strip()
+            year    = re.sub(r'\s+', ' ', parts[i].strip())
             content = parts[i + 1].strip() if i + 1 < len(parts) else ""
             sections.append(f"{year}\n{content}")
     return sections
@@ -100,31 +151,39 @@ def clean_with_llm(year_text: str) -> str:
 
 def extract_questions(cleaned_text):
     questions, years, marks = [], [], []
+
     year_sections = re.split(r"(20[5-9]\d\s+[A-Za-z]{3,})", cleaned_text)
     if len(year_sections) < 2:
         return [], [], []
+
     for i in range(1, len(year_sections), 2):
-        year = year_sections[i].strip()
+        year    = re.sub(r'\s+', ' ', year_sections[i].strip())
         section = year_sections[i + 1].strip()
-        lines = section.split("\n")
+        lines   = section.split("\n")
+
         q_text = ""
         for line in lines:
-            if re.match(r"^\d+\.", line.strip()):
+            stripped = line.strip()
+            is_new_question = bool(re.match(r"^\d{1,2}[\.\)]\s*", stripped))
+            if is_new_question:
                 if q_text:
-                    questions.append(q_text.strip())
+                    q_clean = clean_question_text(q_text.strip())
+                    m = extract_marks(q_clean)
+                    questions.append(q_clean)
                     years.append(year)
-                    m = re.findall(r"[\[\(\{](\d+)[\]\)\}]", q_text)
-                    marks.append(int(m[0]) if m else None)
-                q_text = line.strip()
-            elif len(line.strip()) > 20:
-                q_text += " " + line.strip()
-            elif len(line.strip()) <= 20 and q_text:
-                q_text += " " + line.strip()
+                    marks.append(m)
+                q_text = stripped
+            elif len(stripped) > 20:
+                q_text += " " + stripped
+            elif stripped and not re.match(r"^\d+$", stripped):
+                q_text += " " + stripped
+
         if q_text:
-            questions.append(q_text.strip())
+            q_clean = clean_question_text(q_text.strip())
+            m = extract_marks(q_clean)
+            questions.append(q_clean)
             years.append(year)
-            m = re.findall(r"[\[\(\{](\d+)[\]\)\}]", q_text)
-            marks.append(int(m[0]) if m else None)
+            marks.append(m)
     return questions, years, marks
 
 
@@ -227,14 +286,22 @@ def assign_chapters_to_questions(subject_name: str, questions: list) -> list:
             score = float(scores[sub_idx])
             chapter_score[cid] = chapter_score.get(cid, 0.0) + score
 
-        # Pick chapter with highest accumulated score
-        best_cid  = max(chapter_score, key=chapter_score.get)
-        best_chap = next(c for c in chapters if c["chapter_id"] == best_cid)
+        best_cid   = max(chapter_score, key=chapter_score.get)
+        best_score = chapter_score[best_cid]
 
-        assigned.append({
-            "chapter_id":   best_cid,
-            "chapter_name": best_chap["chapter_name"],
-        })
+        if best_score < CHAPTER_ASSIGNMENT_CONFIDENCE:
+            # Low score = chapter notes are missing from the system
+            print(f"  ⚠ Low confidence ({best_score:.3f}): {q[:70]}")
+            assigned.append({
+                "chapter_id":   -1,
+                "chapter_name": "Unassigned (upload missing chapter notes)",
+            })
+        else:
+            best_chap = next(c for c in chapters if c["chapter_id"] == best_cid)
+            assigned.append({
+                "chapter_id":   best_cid,
+                "chapter_name": best_chap["chapter_name"],
+            })
 
     return assigned
 

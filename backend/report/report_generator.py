@@ -57,8 +57,12 @@ def _build_question_map(questions: list) -> dict:
         if isinstance(chapter_ids, int):
             chapter_ids = [chapter_ids]
         freq  = q.get("freq", 1)
-        marks = [m for m in (q.get("marks") or []) if m is not None]
-
+        marks = [
+            m for m in (q.get("marks") or [])
+            if m is not None
+            and isinstance(m, (int, float))
+            and 1 <= int(m) <= 30
+        ]
         seen_chapters = set()
         for cid in chapter_ids:
             if cid in seen_chapters:
@@ -192,7 +196,7 @@ def generate_report(subject_name: str, save: bool = True) -> dict:
     for ch in chapter_data:
         cid       = ch.get("chapter_id")
         cid_str   = str(cid)
-        name      = ch.get("chapter_name", "").rstrip("]").strip()
+        name      = ch.get("chapter_name", "").replace('\n', ' ').replace('\r', ' ').rstrip("]").strip()
         subtopics = ch.get("subtopics", [])
         important_topics = [s.get("subtopic_name", "") for s in subtopics if s.get("subtopic_name")]
 

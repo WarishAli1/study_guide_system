@@ -90,19 +90,54 @@ def pre_clean_text(text: str) -> str:
 
 def extract_chapter_from_filename(filepath: str) -> Tuple[int, str]:
     basename = os.path.basename(filepath)
+    name_no_ext = os.path.splitext(basename)[0]
+    
     patterns = [
-        r"[Cc]hapter[_\s]*(\d+)[_\s]*(.+?)(?:_\d+)?\.(?:pdf|txt)",
-        r"[Cc]h[_\s]*(\d+)[_\s]*(.+?)(?:_\d+)?\.(?:pdf|txt)",
-        r"[Uu]nit[_\s]*(\d+)[_\s]*(.+?)(?:_\d+)?\.(?:pdf|txt)",
+        r"[Cc]hapter[_\-\s]*(\d+)[_\-\s]*(.+)",
+        r"[Cc]h[_\-\s]*(\d+)[_\-\s]*(.+)",
+        r"[Uu]nit[_\-\s]*(\d+)[_\-\s]*(.*)",
+        r"^(\d+)[_\-\s]+(.+)",
+        r"^(\d+)$",
+        r"[_\-\s]ch[_\-\s]*(\d+)[_\-\s]*(.*)",
+        r"[Mm]odule[_\-\s]*(\d+)[_\-\s]*(.*)",
     ]
+    
     for pattern in patterns:
-        match = re.search(pattern, basename)
+        match = re.search(pattern, name_no_ext)
         if match:
             num = int(match.group(1))
-            name = match.group(2).replace("_", " ").strip()
-            name = re.sub(r"\s+\d+$", "", name)
-            return num, name
-    return 1, "Untitled"
+            name = match.group(2).replace("_", " ").replace("-", " ").strip() if len(match.groups()) > 1 else ""
+            name = re.sub(r"\s+", " ", name).strip()
+            return num, name if name else "Untitled"
+    
+    return -1, ""
+
+
+
+def detect_chapter_from_content(text: str) -> Tuple[int, str]:
+    lines = [l.strip() for l in text.split("\n") if l.strip()][:30]
+    
+    patterns = [
+        r"[Cc]hapter\s+(\d+)\s*[:\-–]?\s*(.*)",
+        r"[Uu]nit\s+(\d+)\s*[:\-–]?\s*(.*)",
+        r"#{1,6}\s*[Cc]hapter\s+(\d+)\s*[:\-–]?\s*(.*)",
+        r"[Mm]odule\s+(\d+)\s*[:\-–]?\s*(.*)",
+    ]
+    
+    roman = {"I":1,"II":2,"III":3,"IV":4,"V":5,"VI":6,"VII":7,"VIII":8,"IX":9,"X":10}
+    
+    for line in lines:
+        for pattern in patterns:
+            match = re.match(pattern, line)
+            if match:
+                num = int(match.group(1))
+                name = match.group(2).strip() if match.group(2) else ""
+                # Clean markdown from name
+                name = re.sub(r"[#\*\_]", "", name).strip()
+                if num > 0:
+                    return num, name if name else "Untitled"
+    
+    return -1, ""
 
 def detect_primary_structure(text: str) -> Tuple[str, Dict]:
     chapter_matches = list(re.finditer(r"\b(chapter)\s+(\d+)", text, re.I))
@@ -139,10 +174,16 @@ def split_into_chapters(text: str, source_filepath: Optional[str] = None) -> Lis
     watermarks       = detect_watermarks(text, structure)
     boundaries       = detect_chapter_boundaries(text, structure, watermarks)
     if not boundaries:
-        if source_filepath:
-            chapter_num, chapter_name = extract_chapter_from_filename(source_filepath)
-            return [{"title": f"Chapter {chapter_num}: {chapter_name}", "content": text}]
-        return [{"title": "Chapter 1: Untitled", "content": text}]
+        ch_num, ch_name = detect_chapter_from_content(text)
+        
+        if ch_num == -1 and source_filepath:
+            ch_num, ch_name = extract_chapter_from_filename(source_filepath)
+        if ch_num == -1:
+            print("⚠ WARNING: Chapter number could not be detected from content or filename.")
+            print("  → Chapter name not detected. Please rename file or add chapter heading.")
+            return [{"title": "CHAPTER_UNDETECTED: Unknown", "content": text}]
+        title = f"Chapter {ch_num}: {ch_name}" if ch_name and ch_name != "Untitled" else f"Chapter {ch_num}"
+        return [{"title": title, "content": text}]
     chapters = []
     for i, (pos, title) in enumerate(boundaries):
         end     = boundaries[i + 1][0] if i + 1 < len(boundaries) else len(text)
@@ -186,6 +227,7 @@ def clean_chapter_with_llm(chapter_text: str, chapter_title: str) -> str:
     return chapter_text
 
 def parse_chapter_info(title_line: str) -> Tuple[int, str]:
+    title_line = title_line.replace('\n', ' ').replace('\r', ' ').strip()
     match = re.search(r"(chapter|unit)\s+(\d+)", title_line, re.I)
     if match:
         return int(match.group(2)), title_line.strip()
@@ -273,20 +315,70 @@ def extract_topics_from_text(text: str, chapter_id: int) -> Dict[str, str]:
     topics = _parse_topics_with_prefix(text, chapter_id)
     if topics:
         return topics
-    candidates = [int(m.group(1)) for m in re.finditer(r"(\d+)\.(\d+)\s+\S", text)]
-    if not candidates:
-        return {}
-    for prefix in sorted(set(candidates)):
-        topics = _parse_topics_with_prefix(text, prefix)
-        if topics:
-            normalized: Dict[str, str] = {}
-            for key, val in topics.items():
-                parts    = key.split(" ", 1)
-                sub_num  = parts[0].split(".")[1]
-                title    = parts[1] if len(parts) > 1 else key
-                normalized[f"{chapter_id}.{sub_num} {title}"] = val
-            return normalized
-    return {}
+
+    cleaned_lines = []
+    for line in text.split("\n"):
+        stripped = re.sub(r"^#{1,6}\s*", "", line)
+        stripped = re.sub(r"\*\*(.+?)\*\*", r"\1", stripped)
+        stripped = re.sub(r"^[\*\-]\s+", "", stripped)
+        cleaned_lines.append(stripped)
+    cleaned_text = "\n".join(cleaned_lines)
+
+    topics = _parse_topics_with_prefix(cleaned_text, chapter_id)
+    if topics:
+        return topics
+
+    candidates = [int(m.group(1)) for m in re.finditer(r"(\d+)\.(\d+)\s+\S", cleaned_text)]
+    if candidates:
+        for prefix in sorted(set(candidates)):
+            topics = _parse_topics_with_prefix(cleaned_text, prefix)
+            if topics:
+                normalized: Dict[str, str] = {}
+                for key, val in topics.items():
+                    parts   = key.split(" ", 1)
+                    sub_num = parts[0].split(".")[1]
+                    title   = parts[1] if len(parts) > 1 else key
+                    normalized[f"{chapter_id}.{sub_num} {title}"] = val
+                return normalized
+
+    fallback_topics: Dict[str, str] = {}
+    current_title: Optional[str] = None
+    current_content: List[str] = []
+    sub_counter = 1
+
+    for line in cleaned_text.split("\n"):
+        s = line.strip()
+        if not s:
+            if current_title:
+                current_content.append("")
+            continue
+        is_heading = (
+            len(s) < 80
+            and not s.endswith(".")
+            and s[0].isupper()
+            and not re.match(r"^\d", s)
+            and not re.match(r"^[a-z]", s)
+            and len(s.split()) <= 8
+        )
+        if is_heading and len(s) > 3:
+            if current_title and current_content:
+                fallback_topics[f"{chapter_id}.{sub_counter} {current_title}"] = \
+                    "\n".join(current_content).strip()
+                sub_counter += 1
+            current_title = s
+            current_content = []
+        else:
+            if current_title:
+                current_content.append(line)
+
+    if current_title and current_content:
+        fallback_topics[f"{chapter_id}.{sub_counter} {current_title}"] = \
+            "\n".join(current_content).strip()
+
+    if fallback_topics:
+        return fallback_topics
+
+    return {f"{chapter_id}.1 Content": text}
 
 
 def _subtopic_sort_key(subtopic_id: str) -> List[int]:
@@ -561,9 +653,22 @@ def process_and_save_chapter(subject_name: str, file_path: str):
     chapters       = split_into_chapters(cleaned_text, source_filepath=file_path)
     final_chapters = []
 
+    subject_folder = os.path.join(Config.CHAPTER_JSON_DIR, subject_name)
+    existing_json_path = os.path.join(subject_folder, f"{subject_name}_chapters.json")
+    existing_chapters = _load_subject_json(existing_json_path)
+    existing_ids = {c["chapter_id"] for c in existing_chapters}
     for chapter in chapters:
-        cleaned_content          = clean_chapter_with_llm(chapter["content"], chapter["title"])
-        chapter_id, chapter_name = parse_chapter_info(chapter["title"])
+        cleaned_content = clean_chapter_with_llm(chapter["content"], chapter["title"])
+        
+        if chapter["title"].startswith("CHAPTER_UNDETECTED"):
+            next_id = max(existing_ids, default=0) + 1
+            while next_id in existing_ids:
+                next_id += 1
+            chapter_id   = next_id
+            chapter_name = "Chapter name not detected — please rename file or add heading"
+            print(f"  ⚠ Assigned Chapter {chapter_id} (auto) — name not detected")
+        else:
+            chapter_id, chapter_name = parse_chapter_info(chapter["title"])
         final_chapters.append({
             "chapter_id":     chapter_id,
             "chapter_name":   chapter_name,
