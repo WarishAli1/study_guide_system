@@ -9,8 +9,6 @@ from config import Config
 import torch
 from openai import OpenAI
 
-CHAPTER_ASSIGNMENT_CONFIDENCE = 0.25
-
 client = OpenAI(
     api_key=Config.GROQ_API_KEY,
     base_url="https://api.groq.com/openai/v1",
@@ -19,6 +17,16 @@ MODEL_NAME = Config.MODEL_NAME
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 CLEAN_PROMPT = Config.QUESTION_CLEAN_PROMPT
+
+
+TITLE_WEIGHT  = 0.30
+KW_WEIGHT     = 0.25
+SEM_WEIGHT    = 0.45
+KW_NORM_CAP   = 8.0
+TITLE_BOOST   = 2.0
+TITLE_BOOST_THRESHOLD = 0.5
+
+CHAPTER_ASSIGNMENT_CONFIDENCE = 0.25
 
 
 def fix_common_ocr_errors(text: str) -> str:
@@ -39,17 +47,21 @@ def fix_common_ocr_errors(text: str) -> str:
     }
     for wrong, correct in replacements.items():
         text = re.sub(rf"\b{wrong}\b", correct, text, flags=re.IGNORECASE)
-    
+
     text = normalize_brackets(text)
     return text
 
 HEADER_PATTERNS = [
-    r"TRIBHUVAN\s+UNIVERSITY",r"INSTITUTE\s+OF\s+ENGINEERING",r"Examination\s+Control\s+Division",
-    r"^Exam\.",r"^Level\b",r"Programme",r"Full\s+Marks",r"Pass\s+Marks",r"Year\s*/?\s*Part",r"^Time\b",
-    r"Candidates\s+are\s+required",r"Attempt\s+[Aa]ll",r"figures\s+in\s+the\s+margin",r"Assume\s+suitable\s+data",
+    r"TRIBHUVAN\s+UNIVERSITY", r"INSTITUTE\s+OF\s+ENGINEERING",
+    r"Examination\s+Control\s+Division",
+    r"^Exam\.", r"^Level\b", r"Programme", r"Full\s+Marks", r"Pass\s+Marks",
+    r"Year\s*/?\s*Part", r"^Time\b",
+    r"Candidates\s+are\s+required", r"Attempt\s+[Aa]ll",
+    r"figures\s+in\s+the\s+margin", r"Assume\s+suitable\s+data",
     r"Subject\s*[:\-]+\s*.{3,80}\(.*?\)",
-    r"^\*+$",r"^\d+$",r"^\s*-{3,}\s*$",r"^\s*={3,}\s*$",
+    r"^\*+$", r"^\d+$", r"^\s*-{3,}\s*$", r"^\s*={3,}\s*$",
 ]
+
 
 def clean_question_text(q: str) -> str:
     if not q:
@@ -61,14 +73,13 @@ def clean_question_text(q: str) -> str:
     q = re.sub(r'\s{2,}', ' ', q)
     return q.strip()
 
+
 def extract_marks(q_text: str):
     if not q_text:
         return None
-
     matches = re.findall(r'\[(\d[\d\+\×xX\s]*)\]', q_text)
     if not matches:
         return None
-
     match = matches[-1].strip()
     if re.search(r'[×xX]', match):
         parts = re.split(r'[×xX]', match)
@@ -84,6 +95,7 @@ def extract_marks(q_text: str):
         return int(match)
     return None
 
+
 def remove_headers(text: str) -> str:
     lines = text.split("\n")
     cleaned_lines = [
@@ -92,31 +104,32 @@ def remove_headers(text: str) -> str:
     ]
     return "\n".join(cleaned_lines)
 
+
 def normalize_brackets(text: str) -> str:
     def _fix(m):
         return f"[{m.group(1)}]"
-
     return re.sub(
-        r'[\[\{\(\|]'           # any opening: [ { ( |
-        r'(\d[\d\+\×xX\*\s]*)' # digits with operators
-        r'[\]\}\)\|]',          # any closing: ] } ) |
+        r'[\[\{\(\|]'
+        r'(\d[\d\+\×xX\*\s]*)'
+        r'[\]\}\)\|]',
         _fix,
         text
     )
+
 
 def split_by_year(text: str):
     text = re.sub(r'(20[5-9]\d)\s*\n\s*([A-Za-z]{3,})', r'\1 \2', text)
     text = re.sub(r'(20[5-9]\d)([A-Z][a-z]{2,})', r'\1 \2', text)
     year_pattern = r"(20[5-9]\d\s+[A-Za-z]{3,})"
     parts = re.split(year_pattern, text)
-
     sections = []
     if len(parts) > 1:
         for i in range(1, len(parts), 2):
-            year    = re.sub(r'\s+', ' ', parts[i].strip())
+            year = re.sub(r'\s+', ' ', parts[i].strip())
             content = parts[i + 1].strip() if i + 1 < len(parts) else ""
             sections.append(f"{year}\n{content}")
     return sections
+
 
 def clean_with_llm(year_text: str) -> str:
     max_retries = 5
@@ -151,16 +164,13 @@ def clean_with_llm(year_text: str) -> str:
 
 def extract_questions(cleaned_text):
     questions, years, marks = [], [], []
-
     year_sections = re.split(r"(20[5-9]\d\s+[A-Za-z]{3,})", cleaned_text)
     if len(year_sections) < 2:
         return [], [], []
-
     for i in range(1, len(year_sections), 2):
-        year    = re.sub(r'\s+', ' ', year_sections[i].strip())
+        year = re.sub(r'\s+', ' ', year_sections[i].strip())
         section = year_sections[i + 1].strip()
-        lines   = section.split("\n")
-
+        lines = section.split("\n")
         q_text = ""
         for line in lines:
             stripped = line.strip()
@@ -177,7 +187,6 @@ def extract_questions(cleaned_text):
                 q_text += " " + stripped
             elif stripped and not re.match(r"^\d+$", stripped):
                 q_text += " " + stripped
-
         if q_text:
             q_clean = clean_question_text(q_text.strip())
             m = extract_marks(q_clean)
@@ -197,119 +206,180 @@ def load_chapters(subject_name):
                 chapters.extend(json.load(f))
     return chapters
 
+_STOPWORDS = {
+    "what", "is", "a", "the", "and", "its", "describe", "steps", "of", "in",
+    "an", "for", "are", "to", "be", "that", "how", "explain", "with", "or",
+    "any", "two", "define", "list", "also", "does", "this", "it", "by", "as",
+    "on", "at", "from", "into", "if", "then", "was", "were", "which", "their",
+    "why", "give", "write", "discuss", "about", "can", "not", "no", "us",
+    "we", "they", "he", "she", "you", "me", "my", "your", "our",
+}
 
-# ─── FIX: NEW CHAPTER TEXT BUILDER ───────────────────────────────────────────
-# OLD problem: _build_chapter_text dumped everything into one giant string.
-# Chapter 7 had 22k chars vs Chapter 4 at 7k chars.
-# Longer chapters dominated cosine similarity just by sheer term frequency,
-# so questions about FOPL (Ch4) or Expert Systems (Ch7 misplaced) scored high
-# against Ch1 which had broad AI terminology overlapping everything.
-#
-# NEW approach: build ONE short, focused text per SUBTOPIC, not per chapter.
-# Then find the best-matching subtopic and use its parent chapter.
-# This is fine-grained and length-normalized.
 
-def _build_subtopic_texts(chapters: list) -> tuple:
-    """
-    Returns:
-        subtopic_texts  - list of short focused strings, one per subtopic
-        subtopic_meta   - list of {chapter_id, chapter_name, subtopic_id, subtopic_name}
-    """
-    subtopic_texts = []
-    subtopic_meta  = []
+def _query_words(query: str) -> list:
+    """Tokenise query into content words (no stopwords, length ≥ 3)."""
+    return [
+        w.lower() for w in re.findall(r"\b[a-z]{3,}\b", query.lower())
+        if w.lower() not in _STOPWORDS
+    ]
+
+
+def _title_match_score(q_words: list, subtopic_name: str) -> float:
+    title_words = set(re.findall(r"\b[a-z]{3,}\b", subtopic_name.lower())) - _STOPWORDS
+    if not title_words:
+        return 0.0
+    return len(title_words & set(q_words)) / len(title_words)
+
+
+def _keyword_overlap_score(q_words: list, kw_list: list) -> float:
+    q_set = set(q_words)
+    k_set = set(kw_list)
+    exact   = len(q_set & k_set)
+    partial = sum(
+        0.5 for qk in q_set for tk in k_set
+        if qk != tk and (qk in tk or tk in qk)
+    )
+    return exact + partial
+
+
+def _subtopic_score(
+    q_words: list,
+    q_embedding,
+    sub_name: str,
+    sub_keywords: list,
+    sub_embedding,
+) -> float:
+    title  = _title_match_score(q_words, sub_name)
+    kw     = _keyword_overlap_score(q_words, sub_keywords)
+    sem    = float(np.dot(q_embedding, sub_embedding))
+
+    title_eff = title * (TITLE_BOOST if title >= TITLE_BOOST_THRESHOLD else 1.0)
+
+    return (
+        TITLE_WEIGHT * title_eff
+        + KW_WEIGHT  * min(kw / KW_NORM_CAP, 1.0)
+        + SEM_WEIGHT * max(sem, 0.0)
+    )
+
+
+def _build_subtopic_records(chapters: list) -> tuple:
+    records = []
+    texts   = []
 
     for chap in chapters:
         chap_id   = chap["chapter_id"]
         chap_name = chap["chapter_name"]
 
         for sub in chap.get("subtopics", []):
-            # Build a focused, length-normalized text for this subtopic:
-            # subtopic name repeated 3× (acts as a title weight) + keywords + paragraph[:400]
             name     = sub.get("subtopic_name", "")
-            keywords = " ".join(sub.get("keywords", []))
-            para     = sub.get("paragraph", "")[:400]
+            keywords = sub.get("keywords", [])
+            para     = sub.get("paragraph", "")[:600]
 
-            text = f"{name} {name} {name} {keywords} {para}".strip()
-            subtopic_texts.append(text)
-            subtopic_meta.append({
+            text = " ".join([name] * 3 + keywords + [para]).strip()
+
+            records.append({
                 "chapter_id":    chap_id,
                 "chapter_name":  chap_name,
                 "subtopic_id":   sub.get("subtopic_id", ""),
                 "subtopic_name": name,
+                "keywords":      keywords,
             })
+            texts.append(text)
 
-    return subtopic_texts, subtopic_meta
+    return records, texts
+
 
 
 def assign_chapters_to_questions(subject_name: str, questions: list) -> list:
-    """
-    For each question, find the top-K most similar subtopics,
-    then vote by chapter to pick the winning chapter.
-
-    Fixes vs old version:
-    1. Subtopic-level matching instead of whole-chapter blob → length-normalized
-    2. Top-K voting (K=5) → one outlier subtopic can't flip the result
-    3. Score-weighted vote (sum of cosine scores per chapter, not just count)
-    """
-    TOP_K = 5  # consider top-5 subtopic matches, vote among their chapters
-
     chapters = load_chapters(subject_name)
-    model    = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+    model    = SentenceTransformer("all-MiniLM-L6-v2", device=device)
 
-    subtopic_texts, subtopic_meta = _build_subtopic_texts(chapters)
+    records, texts = _build_subtopic_records(chapters)
 
-    if not subtopic_texts:
+    if not records:
         raise ValueError("No subtopics found in chapter JSON.")
 
-    # Encode all subtopics + all questions
-    sub_embeddings = model.encode(subtopic_texts, convert_to_tensor=True,
-                                  device=device, batch_size=64, show_progress_bar=False)
-    q_texts        = [q["question"] for q in questions]
-    q_embeddings   = model.encode(q_texts, convert_to_tensor=True,
-                                  device=device, batch_size=64, show_progress_bar=False)
-
-    # cosine similarity: shape [num_questions × num_subtopics]
-    cosine_scores = util.cos_sim(q_embeddings, sub_embeddings).cpu().numpy()
+    all_embeddings = model.encode(
+        texts + [q["question"] for q in questions],
+        convert_to_tensor=False,
+        normalize_embeddings=True,
+        device=device,
+        batch_size=64,
+        show_progress_bar=False,
+    )
+    sub_embeddings = all_embeddings[:len(records)]
+    q_embeddings   = all_embeddings[len(records):]
 
     assigned = []
-    for q_idx, q in enumerate(q_texts):
-        scores = cosine_scores[q_idx]  # shape [num_subtopics]
 
-        # Get top-K subtopic indices
-        top_k_indices = np.argsort(scores)[::-1][:TOP_K]
+    for q_idx, q_dict in enumerate(questions):
+        q_text   = q_dict["question"]
+        q_words  = _query_words(q_text)
+        q_emb    = q_embeddings[q_idx]
 
-        # Vote: accumulate cosine score per chapter
-        chapter_score: dict = {}
-        for sub_idx in top_k_indices:
-            meta  = subtopic_meta[sub_idx]
-            cid   = meta["chapter_id"]
-            score = float(scores[sub_idx])
-            chapter_score[cid] = chapter_score.get(cid, 0.0) + score
+        chapter_best: dict = {}
 
-        best_cid   = max(chapter_score, key=chapter_score.get)
-        best_score = chapter_score[best_cid]
+        for s_idx, rec in enumerate(records):
+            score = _subtopic_score(
+                q_words, q_emb,
+                rec["subtopic_name"], rec["keywords"],
+                sub_embeddings[s_idx],
+            )
+            cid = rec["chapter_id"]
+            if cid not in chapter_best or score > chapter_best[cid]["score"]:
+                chapter_best[cid] = {
+                    "score":    score,
+                    "subtopic": rec["subtopic_name"],
+                }
+
+        if not chapter_best:
+            assigned.append({
+                "chapter_id":   -1,
+                "chapter_name": "Unassigned (no subtopics found)",
+            })
+            continue
+
+        ranked    = sorted(chapter_best.items(), key=lambda x: -x[1]["score"])
+        best_cid  = ranked[0][0]
+        best_info = ranked[0][1]
+        best_score = best_info["score"]
 
         if best_score < CHAPTER_ASSIGNMENT_CONFIDENCE:
-            # Low score = chapter notes are missing from the system
-            print(f"  ⚠ Low confidence ({best_score:.3f}): {q[:70]}")
+            print(
+                f"  ⚠ Low confidence ({best_score:.3f}): {q_text[:70]}\n"
+                f"    best subtopic: Ch{best_cid} – {best_info['subtopic']}"
+            )
             assigned.append({
                 "chapter_id":   -1,
                 "chapter_name": "Unassigned (upload missing chapter notes)",
             })
-        else:
-            best_chap = next(c for c in chapters if c["chapter_id"] == best_cid)
-            assigned.append({
-                "chapter_id":   best_cid,
-                "chapter_name": best_chap["chapter_name"],
-            })
+            continue
+
+        if len(ranked) > 1:
+            runner_score = ranked[1][1]["score"]
+            if runner_score > 0 and (best_score / runner_score) < 1.3:
+                print(
+                    f"  ~ Close call ({best_score:.3f} vs {runner_score:.3f}): "
+                    f"{q_text[:55]}\n"
+                    f"    winner: Ch{best_cid} – {best_info['subtopic']}\n"
+                    f"    runner: Ch{ranked[1][0]} – {ranked[1][1]['subtopic']}"
+                )
+
+        best_chap = next(c for c in chapters if c["chapter_id"] == best_cid)
+        assigned.append({
+            "chapter_id":   best_cid,
+            "chapter_name": best_chap["chapter_name"],
+        })
 
     return assigned
 
 
 def cluster_similar_questions(questions, threshold=0.7):
     model      = SentenceTransformer('all-MiniLM-L6-v2', device=device)
-    embeddings = model.encode([q["question"] for q in questions],
-                               convert_to_tensor=True, device=device)
+    embeddings = model.encode(
+        [q["question"] for q in questions],
+        convert_to_tensor=True, device=device
+    )
     sim_matrix      = util.cos_sim(embeddings, embeddings).cpu().numpy()
     distance_matrix = 1 - sim_matrix
     clustering = AgglomerativeClustering(
@@ -336,7 +406,6 @@ def create_question_json(subject_name, questions, years, marks):
     if os.path.exists(save_path):
         with open(save_path, "r", encoding="utf-8") as f:
             existing_clusters = json.load(f)
-
         old_flat_questions = []
         for cluster in existing_clusters:
             for i in range(len(cluster["years"])):
@@ -347,19 +416,15 @@ def create_question_json(subject_name, questions, years, marks):
                     "chapter_id":   cluster["chapter_id"][i],
                     "chapter_name": cluster["chapter_name"][i],
                 })
-
         question_list = old_flat_questions + new_question_list
     else:
         question_list = new_question_list
 
-    # Re-assign chapters for ALL questions (old + new) using the fixed method
-    # This also retroactively corrects any old wrong mappings.
-    print("  Assigning chapters to questions (subtopic-level matching)...")
+    print("  Assigning chapters to questions (max-score subtopic matching)...")
     assigned = assign_chapters_to_questions(subject_name, question_list)
     for q, a in zip(question_list, assigned):
         q.update(a)
 
-    # Re-cluster
     clusters = cluster_similar_questions(question_list, threshold=0.7)
 
     final_json_list = []
@@ -368,10 +433,10 @@ def create_question_json(subject_name, questions, years, marks):
         final_json_list.append({
             "freq":         len(cluster_questions),
             "question":     cluster_questions[0]["question"],
-            "years":        [q["year"] for q in cluster_questions],
-            "marks":        [q["mark"] for q in cluster_questions],
-            "chapter_id":   [q["chapter_id"] for q in cluster_questions],
-            "chapter_name": [q["chapter_name"] for q in cluster_questions],
+            "years":        [q["year"]         for q in cluster_questions],
+            "marks":        [q["mark"]          for q in cluster_questions],
+            "chapter_id":   [q["chapter_id"]    for q in cluster_questions],
+            "chapter_name": [q["chapter_name"]  for q in cluster_questions],
         })
 
     with open(save_path, "w", encoding="utf-8") as f:
@@ -415,8 +480,8 @@ def process_raw_and_questions(subject_name: str, input_file_path: str):
 
     output_dir = os.path.join(Config.CLEANED_TEXT_DIR, subject_name, "past_paper")
     os.makedirs(output_dir, exist_ok=True)
-    file_name  = os.path.basename(input_file_path)
-    save_path  = os.path.join(output_dir, file_name)
+    file_name = os.path.basename(input_file_path)
+    save_path = os.path.join(output_dir, file_name)
     with open(save_path, "w", encoding="utf-8") as f:
         f.write("\n\n".join(final_sections))
     print(f"Saved cleaned file to {save_path}")
@@ -437,8 +502,9 @@ def process_raw_and_questions(subject_name: str, input_file_path: str):
         print("All cleaned years already exist. Nothing new to add.")
         return
 
-    final_json = create_question_json(subject_name, filtered_questions,
-                                      filtered_years, filtered_marks)
+    final_json = create_question_json(
+        subject_name, filtered_questions, filtered_years, filtered_marks
+    )
     return final_json
 
 

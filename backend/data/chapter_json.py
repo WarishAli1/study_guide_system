@@ -310,43 +310,55 @@ def _parse_topics_with_prefix(text: str, prefix: int) -> Dict[str, str]:
     if current_topic and current_content:
         topics[current_topic] = "\n".join(current_content).strip()
     return topics
-
+       
 def extract_topics_from_text(text: str, chapter_id: int) -> Dict[str, str]:
-    topics = _parse_topics_with_prefix(text, chapter_id)
-    if topics:
+    heading_pattern = re.compile(
+        r'^'
+        r'[\s_]*'
+        r'[#*_]{0,6}'
+        r'[\s*_]*'
+        r'(\d+\.\d+(?:\.\d+)*)'
+        r'[\s\:\-\u2013\u2014]*'
+        r'([^\n]+?)$',
+        re.MULTILINE
+    )
+
+    def _clean_title(title: str) -> str:
+        title = re.sub(r'\*\*(.+?)\*\*', r'\1', title)
+        title = re.sub(r'\*(.+?)\*',     r'\1', title)
+        title = re.sub(r'_(.+?)_',       r'\1', title)
+        title = re.sub(r'[#*_\s]+$',     '',    title)
+        title = re.sub(r'^[*_\s]+',      '',    title)
+        return title.strip()
+
+    def _parse_with_regex(src: str) -> Dict[str, str]:
+        matches = list(heading_pattern.finditer(src))
+        if not matches:
+            return {}
+        topics: Dict[str, str] = {}
+        for i, match in enumerate(matches):
+            subtopic_id   = match.group(1)
+            subtopic_name = _clean_title(match.group(2))
+            start         = match.end()
+            end           = matches[i + 1].start() if i + 1 < len(matches) else len(src)
+            paragraph     = src[start:end].strip()
+            paragraph     = re.sub(r'\*\*(.+?)\*\*', r'\1', paragraph)
+            paragraph     = re.sub(r'\*(.+?)\*',     r'\1', paragraph)
+            if len(paragraph) < 30:
+                continue
+            topics[f'{subtopic_id} {subtopic_name}'] = paragraph
         return topics
 
-    cleaned_lines = []
-    for line in text.split("\n"):
-        stripped = re.sub(r"^#{1,6}\s*", "", line)
-        stripped = re.sub(r"\*\*(.+?)\*\*", r"\1", stripped)
-        stripped = re.sub(r"^[\*\-]\s+", "", stripped)
-        cleaned_lines.append(stripped)
-    cleaned_text = "\n".join(cleaned_lines)
-
-    topics = _parse_topics_with_prefix(cleaned_text, chapter_id)
+    topics = _parse_with_regex(text)
     if topics:
         return topics
-
-    candidates = [int(m.group(1)) for m in re.finditer(r"(\d+)\.(\d+)\s+\S", cleaned_text)]
-    if candidates:
-        for prefix in sorted(set(candidates)):
-            topics = _parse_topics_with_prefix(cleaned_text, prefix)
-            if topics:
-                normalized: Dict[str, str] = {}
-                for key, val in topics.items():
-                    parts   = key.split(" ", 1)
-                    sub_num = parts[0].split(".")[1]
-                    title   = parts[1] if len(parts) > 1 else key
-                    normalized[f"{chapter_id}.{sub_num} {title}"] = val
-                return normalized
 
     fallback_topics: Dict[str, str] = {}
-    current_title: Optional[str] = None
-    current_content: List[str] = []
+    current_title:   Optional[str]  = None
+    current_content: List[str]      = []
     sub_counter = 1
 
-    for line in cleaned_text.split("\n"):
+    for line in text.split("\n"):
         s = line.strip()
         if not s:
             if current_title:
@@ -362,18 +374,20 @@ def extract_topics_from_text(text: str, chapter_id: int) -> Dict[str, str]:
         )
         if is_heading and len(s) > 3:
             if current_title and current_content:
-                fallback_topics[f"{chapter_id}.{sub_counter} {current_title}"] = \
-                    "\n".join(current_content).strip()
-                sub_counter += 1
-            current_title = s
+                content = "\n".join(current_content).strip()
+                if len(content) >= 30:
+                    fallback_topics[f"{chapter_id}.{sub_counter} {current_title}"] = content
+                    sub_counter += 1
+            current_title   = s
             current_content = []
         else:
             if current_title:
                 current_content.append(line)
 
     if current_title and current_content:
-        fallback_topics[f"{chapter_id}.{sub_counter} {current_title}"] = \
-            "\n".join(current_content).strip()
+        content = "\n".join(current_content).strip()
+        if len(content) >= 30:
+            fallback_topics[f"{chapter_id}.{sub_counter} {current_title}"] = content
 
     if fallback_topics:
         return fallback_topics

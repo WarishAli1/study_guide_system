@@ -8,7 +8,6 @@ dist/
 backend/.env
 backend/.env.*
 backend/database.db
-
 frontend/.env
 frontend/.env.*
 __pycache__/
@@ -28,4 +27,3 @@ database.db
 
 .DS_Store
 
-rm_dsets

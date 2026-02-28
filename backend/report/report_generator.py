@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 from config import Config
+from collections import Counter
 
 CHAPTER_JSON_DIR  = Config.CHAPTER_JSON_DIR
 QUESTION_JSON_DIR = Config.QUESTION_JSON_DIR
@@ -36,16 +37,6 @@ def _find_json_file(directory: str) -> Optional[str]:
 
 
 def _build_question_map(questions: list) -> dict:
-    """
-    Build a per-chapter map of questions.
-
-    Returns dict[chapter_id] -> {
-        "all_questions":    [full question dicts],
-        "repeat_questions": [questions with freq > 1],
-        "total_marks_pool": sum of all marks seen,
-        "max_marks_seen":   highest single mark value,
-    }
-    """
     q_map = defaultdict(lambda: {
         "all_questions": [],
         "repeat_questions": [],
@@ -56,30 +47,31 @@ def _build_question_map(questions: list) -> dict:
         chapter_ids = q.get("chapter_id", [])
         if isinstance(chapter_ids, int):
             chapter_ids = [chapter_ids]
+
+        if not chapter_ids:
+            continue
+        cid = Counter(chapter_ids).most_common(1)[0][0]
+        if cid == -1 and len(Counter(chapter_ids)) > 1:
+            cid = Counter(c for c in chapter_ids if c != -1).most_common(1)[0][0] if any(c != -1 for c in chapter_ids) else -1
+
         freq  = q.get("freq", 1)
         marks = [
             m for m in (q.get("marks") or [])
-            if m is not None
-            and isinstance(m, (int, float))
-            and 1 <= int(m) <= 30
+            if m is not None and isinstance(m, (int, float)) and 1 <= int(m) <= 30
         ]
-        seen_chapters = set()
-        for cid in chapter_ids:
-            if cid in seen_chapters:
-                continue
-            seen_chapters.add(cid)
-            entry = q_map[cid]
-            entry["all_questions"].append(q)
-            if freq > 1:
-                entry["repeat_questions"].append({
-                    "question": q["question"],
-                    "freq": freq,
-                    "years": q.get("years", []),
-                    "marks": marks,
-                })
-            if marks:
-                entry["total_marks_pool"] += sum(marks)
-                entry["max_marks_seen"] = max(entry["max_marks_seen"], max(marks))
+
+        entry = q_map[cid]
+        entry["all_questions"].append(q)
+        if freq > 1:
+            entry["repeat_questions"].append({
+                "question": q["question"],
+                "freq": freq,
+                "years": q.get("years", []),
+                "marks": marks,
+            })
+        if marks:
+            entry["total_marks_pool"] += sum(marks)
+            entry["max_marks_seen"] = max(entry["max_marks_seen"], max(marks))
     return q_map
 
 
