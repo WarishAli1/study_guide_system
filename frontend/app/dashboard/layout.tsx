@@ -35,21 +35,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (!isLoading && !isAuthenticated) router.replace("/login");
     }, [isAuthenticated, isLoading, router]);
 
+    useEffect(() => {
+        const handler = () => setSsModalOpen(true);
+        window.addEventListener("open-create-session-modal", handler);
+        return () => window.removeEventListener("open-create-session-modal", handler);
+    }, []);
+
     if (isLoading || !isAuthenticated) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-neutral-200/25">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent" />
             </div>
         );
     }
 
     return (
-        <div className="h-screen flex overflow-hidden bg-white">
+        <div className="h-screen flex overflow-hidden bg-neutral-200/25">
             <Sidebar onCreateSession={() => setSsModalOpen(true)} />
-
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top bar with breadcrumb */}
-                <div className="bg-white border-b border-neutral-100 px-4 py-2 flex items-center gap-2 shrink-0">
+            <div
+                className={`flex-1 flex flex-col min-w-0 overflow-hidden bg-white
+          rounded-tl-2xl rounded-tr-2xl shadow-xl
+          transition-all duration-300 ease-in-out
+          ${sidebarOpen ? "ml-0" : "ml-2 lg:ml-2"}
+          mr-2 mt-2`}
+                style={{
+                    boxShadow: "0 -4px 30px rgba(0, 0, 0, 0.07), 0 0 12px rgba(0, 0, 0, 0.03)",
+                }}
+            >
+                <div className="bg-white rounded-tl-2xl rounded-tr-2xl px-4 py-2 flex items-center gap-2 shrink-0 border-b border-none">
                     <button
                         onClick={toggleSidebar}
                         className="p-1.5 rounded-lg hover:bg-neutral-100 transition-colors text-neutral-500"

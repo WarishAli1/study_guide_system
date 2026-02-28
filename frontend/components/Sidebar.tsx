@@ -34,7 +34,6 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
         setActiveConversation,
         deleteConversation,
     } = useSessionStore();
-
     const { user, logout } = useAuth();
     const router = useRouter();
 
@@ -82,11 +81,11 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
 
             <aside
                 className={`
-                    fixed top-0 left-0 z-50 h-full bg-[#fafafa] border-r border-neutral-200
-                    text-neutral-600 flex flex-col transition-all duration-300 ease-in-out
-                    lg:relative lg:z-auto
-                    ${sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0"}
-                `}
+          fixed top-0 left-0 z-50 h-full bg-[#ebebeb]
+          text-neutral-600 flex flex-col transition-all duration-300 ease-in-out
+          lg:relative lg:z-auto lg:bg-neutral-200/25
+          ${sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0"}
+        `}
             >
                 <div
                     className={`flex flex-col h-full overflow-hidden ${sidebarOpen ? "opacity-100" : "opacity-0"
@@ -118,8 +117,8 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                     <button
                                         onClick={() => setActiveSession(null)}
                                         className="flex items-center gap-1.5 px-2 py-1.5 rounded-md
-                                            text-xs text-neutral-500 hover:text-neutral-700
-                                            hover:bg-neutral-100 transition-colors flex-1 min-w-0"
+                      text-xs text-neutral-400 hover:text-neutral-700
+                      hover:bg-neutral-200 transition-colors flex-1 min-w-0"
                                     >
                                         <ArrowLeft className="w-3 h-3 shrink-0" />
                                         <span className="truncate">All Sessions</span>
@@ -127,7 +126,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                     <button
                                         onClick={onCreateSession}
                                         className="p-1.5 rounded-md hover:bg-neutral-200
-                                            text-neutral-400 hover:text-neutral-600 transition-colors shrink-0"
+                      text-neutral-900 hover:text-neutral-700 transition-colors shrink-0"
                                         title="New Session"
                                     >
                                         <Plus className="w-3.5 h-3.5" />
@@ -154,13 +153,13 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                             key={item.id}
                                             onClick={() => setActiveView(item.id)}
                                             className={`
-                                                w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md
-                                                text-sm transition-colors
-                                                ${isActive
+                        w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md
+                        text-sm transition-colors
+                        ${isActive
                                                     ? "bg-neutral-200/80 text-neutral-900 font-medium"
-                                                    : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"
+                                                    : "text-neutral-900 hover:bg-neutral-200 hover:text-neutral-900"
                                                 }
-                                            `}
+                      `}
                                         >
                                             <item.icon className="w-3.5 h-3.5" />
                                             {item.label}
@@ -180,8 +179,8 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                             setActiveConversation(null);
                                             setActiveView("chat");
                                         }}
-                                        className="p-1 rounded-md hover:bg-neutral-200 text-neutral-400
-                                            hover:text-neutral-600 transition-colors"
+                                        className="p-1 rounded-md hover:bg-neutral-200 text-neutral-900
+                      hover:text-neutral-700 transition-colors"
                                         title="New Chat"
                                     >
                                         <Plus className="w-3.5 h-3.5" />
@@ -216,13 +215,13 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                                         handleChatClick(conv.id)
                                                     }
                                                     className={`
-                                                        group flex items-center gap-2 px-2.5 py-2 rounded-lg
-                                                        transition-colors text-sm cursor-pointer
-                                                        ${isActive
+                            group flex items-center gap-2 px-2.5 py-2 rounded-lg
+                            transition-colors text-sm cursor-pointer
+                            ${isActive
                                                             ? "bg-neutral-200/80 text-neutral-900"
-                                                            : "hover:bg-neutral-100 text-neutral-500 hover:text-neutral-700"
+                                                            : "hover:bg-neutral-200 text-neutral-900"
                                                         }
-                                                    `}
+                          `}
                                                 >
                                                     <Send className="w-3 h-3 shrink-0" />
                                                     <div className="flex-1 min-w-0">
@@ -245,9 +244,9 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                                                     : "Delete"
                                                             }
                                                             className={`p-1 rounded transition-colors shrink-0 ${confirmDelete ===
-                                                                    conv.id
-                                                                    ? "bg-red-100 text-red-500"
-                                                                    : "hover:bg-neutral-200 text-neutral-400"
+                                                                conv.id
+                                                                ? "bg-red-100 text-red-500"
+                                                                : "hover:bg-neutral-200 text-neutral-400"
                                                                 }`}
                                                         >
                                                             <Trash2 className="w-3 h-3" />
@@ -274,9 +273,9 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                 <button
                                     onClick={onCreateSession}
                                     className="w-full flex items-center gap-2 px-3 py-2 rounded-lg
-                                        border border-neutral-300 hover:border-neutral-400
-                                        text-neutral-600 text-sm font-medium
-                                        hover:bg-neutral-100 transition-colors"
+                    border border-neutral-300 hover:border-neutral-400
+                    text-neutral-900 text-sm font-medium
+                    hover:bg-neutral-200 transition-colors"
                                 >
                                     <Plus className="w-4 h-4" />
                                     New Session
@@ -298,8 +297,8 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                                     setActiveSession(session.id)
                                                 }
                                                 className="flex items-center gap-2 px-2.5 py-2 rounded-lg
-                                                    hover:bg-neutral-100 text-neutral-500 hover:text-neutral-700
-                                                    transition-colors cursor-pointer"
+                          hover:bg-neutral-200 text-neutral-900
+                          transition-colors cursor-pointer"
                                             >
                                                 <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                                                 <div className="flex-1 min-w-0">
@@ -341,7 +340,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                 />
                             )}
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-neutral-700 truncate">
+                                <p className="text-xs font-medium text-neutral-900 truncate">
                                     {user?.name}
                                 </p>
                                 <p className="text-[10px] text-neutral-400 truncate">
@@ -351,7 +350,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                             <button
                                 onClick={handleLogout}
                                 title="Sign out"
-                                className="p-1.5 rounded-lg hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600 transition-colors"
+                                className="p-1.5 rounded-lg hover:bg-neutral-200 text-neutral-900 hover:text-neutral-600 transition-colors"
                             >
                                 <LogOut className="w-3.5 h-3.5" />
                             </button>
