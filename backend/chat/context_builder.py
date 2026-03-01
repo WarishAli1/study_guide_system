@@ -17,6 +17,7 @@ def build_context(
     -------
     tuple of (context_string, source_list)
         source_list is a numbered list of sources the LLM should cite as [1], [2], etc.
+        Each source includes the actual text snippet for frontend display.
     """
     parts = []
     source_list = []
@@ -35,16 +36,28 @@ def build_context(
             subtopic_name = chunk.get("subtopic_name", "")
             content = chunk.get("content", "")
 
+            # Truncate source_text for display (first 500 chars)
+            source_text = content.strip()
+            if len(source_text) > 500:
+                source_text = source_text[:500].rsplit(" ", 1)[0] + "…"
+
             source_list.append({
                 "index": i,
                 "chapter_id": chapter_id,
                 "chapter_name": chapter_name,
                 "subtopic_id": chunk.get("subtopic_id", ""),
                 "subtopic_name": subtopic_name,
+                "source_text": source_text,
             })
 
-            parts.append(f"\n[Source {i}] Chapter {chapter_id}: {chapter_name} > {subtopic_name}")
+            # Make the label very explicit so the LLM maps citations correctly
+            parts.append(f"")
+            parts.append(f"━━━ [Source {i}] ━━━")
+            parts.append(f"Chapter: {chapter_id} – {chapter_name}")
+            parts.append(f"Section: {subtopic_name}")
+            parts.append(f"Content:")
             parts.append(content)
+            parts.append(f"━━━ [End Source {i}] ━━━")
             parts.append("")
     else:
         parts.append("No relevant notes content found for this query.")
@@ -108,27 +121,33 @@ def build_system_prompt(subject_name: str) -> str:
 You help students prepare for university exams by answering their questions
 based on their course notes and past papers.
 
-FORMATTING RULES:
+CRITICAL CITATION RULES:
 1. ONLY use information from the PROVIDED CONTEXT to answer. Do NOT hallucinate or invent information.
-2. You MUST cite sources inline using the notation [1], [2], etc. corresponding to the Source numbers provided in the context.
+2. Each piece of context is labeled as [Source 1], [Source 2], etc. with its chapter and section clearly marked.
+3. You MUST cite sources inline using [1], [2], etc. matching the EXACT source number where you found the information.
+   - IMPORTANT: [1] means the information came from the content under "[Source 1]", [2] from "[Source 2]", etc.
+   - Do NOT mix up source numbers. If you use information from [Source 3], cite it as [3], NOT [1] or [2].
    - Place the citation at the END of the sentence or clause that uses information from that source.
    - Example: "AI was coined by John McCarthy in 1956 [1]. There are several approaches to AI [3]."
    - You can cite multiple sources: "This concept involves reasoning and planning [1][3]."
    - Every factual claim MUST have at least one citation.
-3. Use proper Markdown formatting:
+4. VERIFY your citations: Before writing [N], confirm that the fact you're citing actually appears in [Source N]'s content.
+
+FORMATTING RULES:
+1. Use proper Markdown formatting:
    - Use ## for section headings, ### for subsection headings
    - Use **bold** for key terms and important concepts
    - Use bullet points (- ) and numbered lists (1. ) to organize information
    - Use `inline code` for technical terms, formulas variable names etc.
    - Use code blocks with language tags for code/algorithms
-4. For mathematical expressions:
+2. For mathematical expressions:
    - Use $...$ for inline math (e.g., $E = mc^2$)
    - Use $$...$$ for display/block math equations
    - Use proper LaTeX notation for all mathematical formulas
-5. If a related past exam question is shown in context, mention it (e.g., "This topic was asked in 2081 Ashwin for 10 marks").
-6. If the context does NOT contain enough information, say:
+3. If a related past exam question is shown in context, mention it (e.g., "This topic was asked in 2081 Ashwin for 10 marks").
+4. If the context does NOT contain enough information, say:
    "Based on the available notes, I don't have enough information to fully answer this question.
    The relevant chapter appears to be [chapter name] — you may want to review your notes for this topic."
-7. Keep answers concise but complete. Aim for exam-ready answers.
-8. Do NOT restate the question. Do NOT list sources at the end — only cite inline.
+5. Keep answers concise but complete. Aim for exam-ready answers.
+6. Do NOT restate the question. Do NOT list sources at the end — only cite inline.
 """

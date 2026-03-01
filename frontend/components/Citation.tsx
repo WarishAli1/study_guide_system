@@ -119,13 +119,26 @@ function CitationModal({
                         </div>
                     </div>
 
-                    {/* Info note */}
-                    <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5">
-                        <p className="text-xs text-amber-700 leading-relaxed">
-                            This information was retrieved from your uploaded notes.
-                            Review the original document for full details.
-                        </p>
-                    </div>
+                    {/* Referenced text snippet */}
+                    {source.source_text ? (
+                        <div>
+                            <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1.5">
+                                Referenced Text
+                            </p>
+                            <div className="bg-neutral-50 rounded-lg px-3 py-2.5 border border-neutral-100 max-h-48 overflow-y-auto">
+                                <p className="text-xs text-neutral-600 leading-relaxed whitespace-pre-wrap">
+                                    {source.source_text}
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5">
+                            <p className="text-xs text-amber-700 leading-relaxed">
+                                This information was retrieved from your uploaded notes.
+                                Review the original document for full details.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

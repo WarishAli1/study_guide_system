@@ -31,6 +31,7 @@ class SourceInfo(BaseModel):
     chapter_name: str
     subtopic_id: str
     subtopic_name: str
+    source_text: str = ""
 
 
 class RelatedQuestion(BaseModel):
