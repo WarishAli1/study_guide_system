@@ -17,7 +17,7 @@ import type {
     ChatConversation,
 } from "./types";
 
-export type SessionView = "dashboard" | "documents" | "chat" | "guide";
+export type SessionView = "dashboard" | "documents" | "chat" | "guide" | "quiz";
 
 interface SessionStore {
     sessions: Session[];

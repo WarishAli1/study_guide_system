@@ -2,6 +2,7 @@
 
 import { useSessionStore } from "@/lib/session-store";
 import ChatView from "./Chat";
+import QuizView from "./QuizView";
 import FileUploadCard from "./FileUploadCard";
 import StudyGuideView from "./StudyGuideView";
 import type { Session } from "@/lib/types";
@@ -26,6 +27,7 @@ export default function SessionView({ session }: Props) {
             {activeView === "documents" && <DocumentsView session={session} />}
             {activeView === "chat" && <ChatView session={session} />}
             {activeView === "guide" && <StudyGuideView session={session} />}
+            {activeView === "quiz" && <QuizView session={session} />}
         </div>
     );
 }

@@ -122,3 +122,28 @@ export interface Session {
     conversations: ChatConversation[];
     cachedGuide: StudyGuideReport | null;
 }
+
+export interface QuizOption {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+}
+
+export interface QuizQuestion {
+    id: number;
+    question: string;
+    options: QuizOption;
+    correct: string;
+    explanation: string;
+    source: {
+        chapter_name: string;
+        subtopic_name: string;
+    };
+}
+
+export interface QuizData {
+    subject: string;
+    total_questions: number;
+    questions: QuizQuestion[];
+}

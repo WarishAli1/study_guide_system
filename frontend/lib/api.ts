@@ -81,4 +81,9 @@ export const chatAPI = {
         api.post<ChatResponseData>("/api/chat", payload),
 };
 
+export const quizAPI = {
+    generate: (subject: string) =>
+        api.get(`/api/quiz/${encodeURIComponent(subject)}`),
+};
+
 export default api;

@@ -37,8 +37,8 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 0px;
+  height: 0px;
 }
 
 ::-webkit-scrollbar-track {
@@ -46,12 +46,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
+  background: transparent;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 button,

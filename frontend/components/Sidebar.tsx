@@ -12,6 +12,7 @@ import {
     Upload,
     LayoutDashboard,
     ArrowLeft,
+    CircleHelp,
 } from "lucide-react";
 import { useSessionStore } from "@/lib/session-store";
 import { useAuth } from "@/lib/auth";
@@ -33,6 +34,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
         setActiveView,
         setActiveConversation,
         deleteConversation,
+        getActiveSession,
     } = useSessionStore();
     const { user, logout } = useAuth();
     const router = useRouter();
@@ -63,6 +65,10 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
             setTimeout(() => setConfirmDelete(null), 3000);
         }
     };
+
+    // Check if study guide has been generated (cached)
+    const currentSession = getActiveSession();
+    const hasGuide = currentSession?.cachedGuide !== null && currentSession?.cachedGuide !== undefined;
 
     const navItems = [
         { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
@@ -166,6 +172,39 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                         </button>
                                     );
                                 })}
+
+                                {/* Generate Quiz — only visible when on guide page */}
+                                {activeView === "guide" && (
+                                    <button
+                                        onClick={() => hasGuide && setActiveView("quiz")}
+                                        disabled={!hasGuide}
+                                        className={`
+                      w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md
+                      text-sm transition-colors
+                      ${activeView === "quiz"
+                                                ? "bg-neutral-200/80 text-neutral-900 font-medium"
+                                                : hasGuide
+                                                    ? "text-neutral-900 hover:bg-neutral-200 hover:text-neutral-900 cursor-pointer"
+                                                    : "text-neutral-400 cursor-not-allowed opacity-50"
+                                            }
+                    `}
+                                    >
+                                        <CircleHelp className="w-3.5 h-3.5" />
+                                        Generate Quiz
+                                    </button>
+                                )}
+
+                                {/* Also show quiz nav item when actively on quiz view */}
+                                {activeView === "quiz" && (
+                                    <button
+                                        onClick={() => setActiveView("quiz")}
+                                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md
+                      text-sm bg-neutral-200/80 text-neutral-900 font-medium transition-colors"
+                                    >
+                                        <CircleHelp className="w-3.5 h-3.5" />
+                                        Quiz
+                                    </button>
+                                )}
                             </nav>
 
                             {/* Chat conversations list */}
@@ -205,15 +244,9 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                             return (
                                                 <div
                                                     key={conv.id}
-                                                    onMouseEnter={() =>
-                                                        setHoveredChat(conv.id)
-                                                    }
-                                                    onMouseLeave={() =>
-                                                        setHoveredChat(null)
-                                                    }
-                                                    onClick={() =>
-                                                        handleChatClick(conv.id)
-                                                    }
+                                                    onMouseEnter={() => setHoveredChat(conv.id)}
+                                                    onMouseLeave={() => setHoveredChat(null)}
+                                                    onClick={() => handleChatClick(conv.id)}
                                                     className={`
                             group flex items-center gap-2 px-2.5 py-2 rounded-lg
                             transition-colors text-sm cursor-pointer
@@ -231,20 +264,13 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                                     </div>
                                                     {hoveredChat === conv.id ? (
                                                         <button
-                                                            onClick={(e) =>
-                                                                handleDeleteChat(
-                                                                    e,
-                                                                    conv.id
-                                                                )
-                                                            }
+                                                            onClick={(e) => handleDeleteChat(e, conv.id)}
                                                             title={
-                                                                confirmDelete ===
-                                                                    conv.id
+                                                                confirmDelete === conv.id
                                                                     ? "Click again to confirm"
                                                                     : "Delete"
                                                             }
-                                                            className={`p-1 rounded transition-colors shrink-0 ${confirmDelete ===
-                                                                conv.id
+                                                            className={`p-1 rounded transition-colors shrink-0 ${confirmDelete === conv.id
                                                                 ? "bg-red-100 text-red-500"
                                                                 : "hover:bg-neutral-200 text-neutral-400"
                                                                 }`}
@@ -268,7 +294,6 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                     ) : (
                         /* No active session */
                         <div className="flex-1 flex flex-col px-3">
-                            {/* New Session button */}
                             <div className="py-3 shrink-0">
                                 <button
                                     onClick={onCreateSession}
@@ -282,7 +307,6 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                 </button>
                             </div>
 
-                            {/* Session list in sidebar */}
                             {sessions.length > 0 && (
                                 <div className="flex-1 overflow-y-auto min-h-0 space-y-0.5">
                                     <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium px-2 mb-1">
@@ -293,9 +317,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                         return (
                                             <div
                                                 key={session.id}
-                                                onClick={() =>
-                                                    setActiveSession(session.id)
-                                                }
+                                                onClick={() => setActiveSession(session.id)}
                                                 className="flex items-center gap-2 px-2.5 py-2 rounded-lg
                           hover:bg-neutral-200 text-neutral-900
                           transition-colors cursor-pointer"

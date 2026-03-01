@@ -13,6 +13,7 @@ const VIEW_LABELS: Record<SessionView, string> = {
     documents: "Documents",
     chat: "Chat",
     guide: "Study Guide",
+    quiz: "Quiz",
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

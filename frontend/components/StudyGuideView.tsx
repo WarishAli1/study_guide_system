@@ -9,6 +9,7 @@ import {
     BookOpen,
     ChevronDown,
     ChevronRight,
+    CircleHelp,
     RefreshCw,
     HelpCircle,
     BarChart3,
@@ -250,12 +251,13 @@ export default function StudyGuideView({ session }: Props) {
         <div className="flex-1 flex overflow-hidden">
             <div className="flex-1 overflow-y-auto">
                 <div className="max-w-5xl mx-auto px-6 py-6">
-                    <div className="flex items-start justify-between mb-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-8">
                         <div>
-                            <h2 className="text-lg font-semibold text-neutral-900">
+                            <h2 className="text-xl font-bold text-neutral-900 tracking-tight">
                                 {displayTitle}
                             </h2>
-                            <p className="text-xs text-neutral-400 mt-0.5">
+                            <p className="text-xs text-neutral-400 mt-1">
                                 Generated{" "}
                                 {new Date(
                                     report.generated_at
@@ -270,6 +272,13 @@ export default function StudyGuideView({ session }: Props) {
                         </div>
                         <div className="flex items-center gap-2">
                             <button
+                                onClick={() => setActiveView("quiz")}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 transition-colors"
+                            >
+                                <CircleHelp className="w-3.5 h-3.5" />
+                                Generate Quiz
+                            </button>
+                            <button
                                 onClick={handleRegenerate}
                                 disabled={loading}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-300
@@ -277,23 +286,10 @@ export default function StudyGuideView({ session }: Props) {
                                     disabled:opacity-40"
                             >
                                 <RefreshCw
-                                    className={`w-3 h-3 ${loading ? "animate-spin" : ""
-                                        }`}
+                                    className={`w-3 h-3 ${loading ? "animate-spin" : ""}`}
                                 />
                                 Regenerate
                             </button>
-
-                            {panelItem && !panelOpen && (
-                                <button
-                                    onClick={() => setPanelOpen(true)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                                        bg-neutral-900 text-white text-xs font-medium
-                                        hover:bg-neutral-800 transition-colors"
-                                >
-                                    <MessageSquare className="w-3 h-3" />
-                                    Ask in Chat
-                                </button>
-                            )}
                         </div>
                     </div>
 
@@ -306,7 +302,8 @@ export default function StudyGuideView({ session }: Props) {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+                    {/* Summary cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
                         <SummaryCard
                             icon={<BookOpen className="w-4 h-4" />}
                             label="Chapters"
@@ -329,7 +326,8 @@ export default function StudyGuideView({ session }: Props) {
                         />
                     </div>
 
-                    <div className="space-y-3">
+                    {/* Chapters */}
+                    <div className="space-y-8">
                         {sortedChapters.map((ch) => (
                             <ChapterCard
                                 key={ch.chapter_id}
@@ -342,9 +340,9 @@ export default function StudyGuideView({ session }: Props) {
                 </div>
             </div>
 
+            {/* Right panel */}
             <div
-                className={`border-l border-neutral-200 bg-white flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${panelOpen ? "w-80" : "w-0"
-                    }`}
+                className={`border-l border-neutral-200 bg-white flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${panelOpen ? "w-80" : "w-0"}`}
             >
                 {panelOpen && panelItem && (
                     <div className="flex flex-col h-full w-80">
@@ -408,16 +406,14 @@ export default function StudyGuideView({ session }: Props) {
                                                     Years
                                                 </span>
                                                 <div className="flex flex-wrap gap-1">
-                                                    {panelItem.years.map(
-                                                        (y, i) => (
-                                                            <span
-                                                                key={i}
-                                                                className="text-xs text-neutral-600 bg-neutral-50 rounded px-1.5 py-0.5"
-                                                            >
-                                                                {y}
-                                                            </span>
-                                                        )
-                                                    )}
+                                                    {panelItem.years.map((y, i) => (
+                                                        <span
+                                                            key={i}
+                                                            className="text-xs text-neutral-600 bg-neutral-50 rounded px-1.5 py-0.5"
+                                                        >
+                                                            {y}
+                                                        </span>
+                                                    ))}
                                                 </div>
                                             </div>
                                         )}
@@ -433,11 +429,7 @@ export default function StudyGuideView({ session }: Props) {
                                                             ...new Set(
                                                                 panelItem.marks
                                                                     .filter(
-                                                                        (
-                                                                            m
-                                                                        ): m is number =>
-                                                                            m !=
-                                                                            null
+                                                                        (m): m is number => m != null
                                                                     )
                                                                     .map(String)
                                                             ),
@@ -483,6 +475,8 @@ export default function StudyGuideView({ session }: Props) {
     );
 }
 
+/* ─── Summary Card ─────────────────────────────────────────────────── */
+
 function SummaryCard({
     icon,
     label,
@@ -493,17 +487,19 @@ function SummaryCard({
     value: string | number;
 }) {
     return (
-        <div className="border border-neutral-200 rounded-lg px-4 py-3">
-            <div className="flex items-center gap-2 text-neutral-400 mb-1">
+        <div className="border border-neutral-200 rounded-xl px-4 py-3.5">
+            <div className="flex items-center gap-2 text-neutral-400 mb-1.5">
                 {icon}
                 <span className="text-[11px] uppercase tracking-wider font-medium">
                     {label}
                 </span>
             </div>
-            <p className="text-lg font-semibold text-neutral-900">{value}</p>
+            <p className="text-xl font-bold text-neutral-900">{value}</p>
         </div>
     );
 }
+
+/* ─── Chapter Card ─────────────────────────────────────────────────── */
 
 function ChapterCard({
     chapter,
@@ -529,119 +525,110 @@ function ChapterCard({
     const faq = chapter.faq || [];
     const chapterName = chapter.chapter_name;
 
-    // Split into repeated (freq > 1) and single-occurrence (freq === 1)
     const repeatedQuestions = faq.filter((q) => q.freq > 1);
     const singleQuestions = faq.filter((q) => q.freq <= 1);
     const displayedQuestions = showAllQuestions ? faq : repeatedQuestions;
 
     return (
-        <div className="border border-neutral-200 rounded-lg overflow-hidden">
-            <button
-                onClick={() => setExpanded(!expanded)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-neutral-50
-                    transition-colors text-left"
-            >
-                {expanded ? (
-                    <ChevronDown className="w-4 h-4 text-neutral-400 shrink-0" />
-                ) : (
-                    <ChevronRight className="w-4 h-4 text-neutral-400 shrink-0" />
-                )}
-
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-neutral-400 font-mono">
-                            Ch. {chapter.chapter_id}
-                        </span>
-                        <h3 className="text-sm font-medium text-neutral-900 truncate">
-                            {chapterName}
-                        </h3>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                    {recommendedHours && (
-                        <span className="text-xs text-neutral-400 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {recommendedHours
-                                .replace("hours", "h")
-                                .replace("hour", "h")}
-                        </span>
-                    )}
-                    {chapter.total_past_questions > 0 && (
-                        <span className="text-xs text-neutral-400 flex items-center gap-1">
-                            <HelpCircle className="w-3 h-3" />
-                            {chapter.total_past_questions}
-                        </span>
-                    )}
-                    <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded ${priorityStyles[studyPriority]}`}
-                    >
-                        {studyPriority}
+        <div>
+            {/* Chapter header */}
+            <div className="mb-4">
+                <div className="flex items-start gap-4">
+                    <span className="shrink-0 w-10 h-10 rounded-xl bg-neutral-900 text-white
+                        flex items-center justify-center text-sm font-bold mt-0.5">
+                        {chapter.chapter_id}
                     </span>
-                    <span className="text-xs font-mono text-neutral-500 w-8 text-right">
-                        {chapter.importance_score.toFixed(1)}
-                    </span>
-                </div>
-            </button>
-
-            {expanded && (
-                <div className="border-t border-neutral-100 px-4 py-4 space-y-4">
-                    <div className="flex gap-6 text-xs text-neutral-500 flex-wrap">
-                        {chapter.credit_hours != null && (
-                            <span>Credit Hours: {chapter.credit_hours}</span>
-                        )}
-                        {chapter.marks_distribution != null && (
-                            <span>Marks: {chapter.marks_distribution}</span>
-                        )}
-                        <span>
-                            Importance:{" "}
-                            {chapter.importance_score.toFixed(1)}/10
-                        </span>
-                        <span>Study Time: {recommendedHours}</span>
-                    </div>
-
-                    {importantTopics.length > 0 && (
-                        <div>
-                            <h4 className="text-xs font-medium text-neutral-700 uppercase tracking-wider mb-2">
-                                Important Topics
-                            </h4>
-                            <div className="flex flex-wrap gap-1.5">
-                                {importantTopics.map((t, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() =>
-                                            onKeywordClick(t, chapterName)
-                                        }
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs
-                                            bg-neutral-100 text-neutral-600
-                                            hover:bg-neutral-200 hover:text-neutral-800
-                                            transition-colors cursor-pointer group"
-                                    >
-                                        {t}
-                                        <MessageSquare className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400" />
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {faq.length > 0 && (
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-xs font-medium text-neutral-700 uppercase tracking-wider">
-                                    {showAllQuestions
-                                        ? "All Past Questions"
-                                        : "Frequently Asked Questions"}
-                                </h4>
-                                {repeatedQuestions.length > 0 && !showAllQuestions && (
-                                    <span className="text-[10px] text-neutral-400">
-                                        Showing {repeatedQuestions.length} repeated of {faq.length} total
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3">
+                            <h3 className="text-lg font-bold text-neutral-900 leading-snug tracking-tight">
+                                {chapterName}
+                            </h3>
+                            <div className="flex items-center gap-2 shrink-0 mt-1">
+                                {recommendedHours && (
+                                    <span className="text-xs text-neutral-400 flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {recommendedHours
+                                            .replace("hours", "h")
+                                            .replace("hour", "h")}
                                     </span>
                                 )}
+                                <span
+                                    className={`text-[10px] font-semibold px-2.5 py-1 rounded-md ${priorityStyles[studyPriority]}`}
+                                >
+                                    {studyPriority}
+                                </span>
                             </div>
+                        </div>
+                        <div className="flex items-center gap-4 mt-1.5 text-xs text-neutral-400">
+                            {chapter.credit_hours != null && (
+                                <span>{chapter.credit_hours} credit hrs</span>
+                            )}
+                            {chapter.marks_distribution != null && (
+                                <span>{chapter.marks_distribution} marks</span>
+                            )}
+                            {chapter.total_past_questions > 0 && (
+                                <span>{chapter.total_past_questions} past questions</span>
+                            )}
+                            <span>
+                                Score: {chapter.importance_score.toFixed(1)}/10
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            {/* Important topics */}
+            {importantTopics.length > 0 && (
+                <div className="mb-4 ml-14">
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <BookOpen className="w-3 h-3" />
+                        Key Topics
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {importantTopics.map((t, i) => (
+                            <button
+                                key={i}
+                                onClick={() => onKeywordClick(t, chapterName)}
+                                className="px-4 py-2.5 rounded-xl bg-neutral-50 border border-neutral-200
+                                    text-sm text-neutral-700 font-medium
+                                    hover:bg-neutral-100 hover:border-neutral-300
+                                    transition-colors cursor-pointer group
+                                    flex items-center gap-1.5"
+                            >
+                                {t}
+                                <MessageSquare className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Past questions — collapsible */}
+            {faq.length > 0 && (
+                <div className="ml-14">
+                    <button
+                        onClick={() => setExpanded(!expanded)}
+                        className="flex items-center gap-1.5 text-xs text-neutral-400
+                            hover:text-neutral-600 transition-colors mb-2"
+                    >
+                        {expanded ? (
+                            <ChevronDown className="w-3 h-3" />
+                        ) : (
+                            <ChevronRight className="w-3 h-3" />
+                        )}
+                        <HelpCircle className="w-3 h-3" />
+                        {faq.length} past question{faq.length !== 1 ? "s" : ""}
+                        {repeatedQuestions.length > 0 && (
+                            <span className="text-neutral-300 ml-1">
+                                ({repeatedQuestions.length} repeated)
+                            </span>
+                        )}
+                    </button>
+
+                    {expanded && (
+                        <div className="mt-2">
                             {repeatedQuestions.length === 0 && !showAllQuestions && (
-                                <div className="text-center py-4 border border-neutral-200 rounded-lg">
+                                <div className="text-center py-4 border border-neutral-200 rounded-xl">
                                     <p className="text-xs text-neutral-400 mb-2">
                                         No repeated questions found for this chapter.
                                     </p>
@@ -659,23 +646,23 @@ function ChapterCard({
 
                             {displayedQuestions.length > 0 && (
                                 <>
-                                    <div className="border border-neutral-200 rounded-lg overflow-x-auto">
+                                    <div className="border border-neutral-200 rounded-xl overflow-x-auto">
                                         <table className="w-full text-xs">
                                             <thead>
                                                 <tr className="bg-neutral-50 border-b border-neutral-200">
-                                                    <th className="text-left px-3 py-2 font-medium text-neutral-500 uppercase tracking-wider">
+                                                    <th className="text-left px-3 py-2.5 font-medium text-neutral-500 uppercase tracking-wider">
                                                         Question
                                                     </th>
-                                                    <th className="text-center px-3 py-2 font-medium text-neutral-500 uppercase tracking-wider w-16">
+                                                    <th className="text-center px-3 py-2.5 font-medium text-neutral-500 uppercase tracking-wider w-16">
                                                         Freq
                                                     </th>
-                                                    <th className="text-left px-3 py-2 font-medium text-neutral-500 uppercase tracking-wider w-28">
+                                                    <th className="text-left px-3 py-2.5 font-medium text-neutral-500 uppercase tracking-wider w-28">
                                                         Years
                                                     </th>
-                                                    <th className="text-center px-3 py-2 font-medium text-neutral-500 uppercase tracking-wider w-16">
+                                                    <th className="text-center px-3 py-2.5 font-medium text-neutral-500 uppercase tracking-wider w-16">
                                                         Marks
                                                     </th>
-                                                    <th className="w-10 px-2 py-2"></th>
+                                                    <th className="w-10 px-2 py-2.5"></th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-neutral-100">
@@ -710,15 +697,10 @@ function ChapterCard({
                                                                 : "")
                                                             : "\u2014";
 
-                                                    const isRepeated = q.freq > 1;
-
                                                     return (
                                                         <tr
                                                             key={i}
-                                                            className={`hover:bg-neutral-50 transition-colors cursor-pointer group ${!isRepeated && showAllQuestions
-                                                                ? "bg-white"
-                                                                : ""
-                                                                }`}
+                                                            className="hover:bg-neutral-50 transition-colors cursor-pointer group"
                                                             onClick={() =>
                                                                 onQuestionClick(
                                                                     q,
@@ -726,10 +708,10 @@ function ChapterCard({
                                                                 )
                                                             }
                                                         >
-                                                            <td className="px-3 py-2 text-neutral-700 leading-relaxed break-words">
+                                                            <td className="px-3 py-2.5 text-neutral-700 leading-relaxed break-words">
                                                                 {q.question}
                                                             </td>
-                                                            <td className="px-3 py-2 text-center">
+                                                            <td className="px-3 py-2.5 text-center">
                                                                 <span
                                                                     className={`inline-block min-w-[20px] px-1.5 py-0.5 rounded text-[10px] font-semibold ${q.freq >= 3
                                                                         ? "bg-neutral-900 text-white"
@@ -741,13 +723,13 @@ function ChapterCard({
                                                                     {q.freq}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-3 py-2 text-neutral-400">
+                                                            <td className="px-3 py-2.5 text-neutral-400">
                                                                 {yearDisplay}
                                                             </td>
-                                                            <td className="px-3 py-2 text-center text-neutral-500">
+                                                            <td className="px-3 py-2.5 text-center text-neutral-500">
                                                                 {markDisplay}
                                                             </td>
-                                                            <td className="px-2 py-2">
+                                                            <td className="px-2 py-2.5">
                                                                 <MessageSquare className="w-3 h-3 text-neutral-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                             </td>
                                                         </tr>
@@ -786,14 +768,17 @@ function ChapterCard({
                             )}
                         </div>
                     )}
-
-                    {faq.length === 0 && (
-                        <p className="text-xs text-neutral-400">
-                            No past paper questions mapped to this chapter.
-                        </p>
-                    )}
                 </div>
             )}
+
+            {faq.length === 0 && (
+                <p className="text-xs text-neutral-400 ml-14">
+                    No past paper questions mapped to this chapter.
+                </p>
+            )}
+
+            {/* Divider */}
+            <div className="mt-8 border-b border-neutral-100" />
         </div>
     );
 }
