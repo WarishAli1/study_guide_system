@@ -82,8 +82,10 @@ export const chatAPI = {
 };
 
 export const quizAPI = {
-    generate: (subject: string) =>
-        api.get(`/api/quiz/${encodeURIComponent(subject)}`),
+    generate: (subject: string, newQuiz: boolean = false) =>
+        api.get(`/api/quiz/${encodeURIComponent(subject)}`, {
+            params: newQuiz ? { new: true } : {},
+        }),
 };
 
 export default api;

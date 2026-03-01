@@ -34,11 +34,11 @@ export default function QuizView({ session }: Props) {
 
     // Auto-generate on mount
     useEffect(() => {
-        handleGenerate();
+        loadQuiz(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handleGenerate = async () => {
+    const loadQuiz = async (newQuiz: boolean = false) => {
         setLoading(true);
         setError(null);
         setQuiz(null);
@@ -47,7 +47,7 @@ export default function QuizView({ session }: Props) {
         setCurrentIndex(0);
         setShowScore(false);
         try {
-            const res = await quizAPI.generate(session.name);
+            const res = await quizAPI.generate(session.name, newQuiz);
             setQuiz(res.data as QuizData);
         } catch (err: any) {
             setError(
@@ -118,7 +118,7 @@ export default function QuizView({ session }: Props) {
                 <div className="text-center max-w-sm px-6">
                     <p className="text-sm text-red-500 mb-4">{error}</p>
                     <button
-                        onClick={handleGenerate}
+                        onClick={() => loadQuiz(true)}
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
               bg-neutral-900 text-white text-sm font-medium
               hover:bg-neutral-800 transition-colors"
@@ -154,7 +154,7 @@ export default function QuizView({ session }: Props) {
                         </p>
                         <div className="flex items-center gap-3">
                             <button
-                                onClick={handleGenerate}
+                                onClick={() => loadQuiz(true)}
                                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
                   bg-neutral-900 text-white text-sm font-medium
                   hover:bg-neutral-800 transition-colors"
@@ -323,7 +323,7 @@ export default function QuizView({ session }: Props) {
                     </button>
 
                     <button
-                        onClick={handleGenerate}
+                        onClick={() => loadQuiz(true)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
               text-xs text-neutral-400 hover:text-neutral-600
               hover:bg-neutral-50 transition-colors"
