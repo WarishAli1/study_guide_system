@@ -122,6 +122,7 @@ export interface Session {
     documents: SessionDocument[];
     conversations: ChatConversation[];
     cachedGuide: StudyGuideReport | null;
+    quizRecords: QuizRecord[];
 }
 
 export interface QuizOption {
@@ -146,5 +147,15 @@ export interface QuizQuestion {
 export interface QuizData {
     subject: string;
     total_questions: number;
+    questions: QuizQuestion[];
+}
+
+export interface QuizRecord {
+    id: string;
+    createdAt: string;
+    subject: string;
+    totalQuestions: number;
+    answers: Record<number, string>;
+    revealed: Record<number, boolean>;
     questions: QuizQuestion[];
 }

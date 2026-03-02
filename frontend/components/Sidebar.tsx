@@ -10,7 +10,7 @@ import {
     Sparkles,
     Send,
     Upload,
-    LayoutDashboard,
+    Rocket,
     ArrowLeft,
     CircleHelp,
 } from "lucide-react";
@@ -34,7 +34,6 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
         setActiveView,
         setActiveConversation,
         deleteConversation,
-        getActiveSession,
     } = useSessionStore();
     const { user, logout } = useAuth();
     const router = useRouter();
@@ -66,14 +65,11 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
         }
     };
 
-    // Check if study guide has been generated (cached)
-    const currentSession = getActiveSession();
-    const hasGuide = currentSession?.cachedGuide !== null && currentSession?.cachedGuide !== undefined;
-
     const navItems = [
-        { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
+        { id: "quickstart" as const, label: "Quick Start", icon: Rocket },
         { id: "documents" as const, label: "Documents", icon: Upload },
         { id: "guide" as const, label: "Study Guide", icon: Sparkles },
+        { id: "quiz" as const, label: "Quiz", icon: CircleHelp },
     ];
 
     return (
@@ -117,7 +113,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
 
                     {activeSession ? (
                         <>
-                            {/* Back to sessions + New Session */}
+                            {/* Back to dashboard + New Session */}
                             <div className="px-3 pb-2 shrink-0">
                                 <div className="flex items-center gap-1.5">
                                     <button
@@ -127,7 +123,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                       hover:bg-neutral-200 transition-colors flex-1 min-w-0"
                                     >
                                         <ArrowLeft className="w-3 h-3 shrink-0" />
-                                        <span className="truncate">All Sessions</span>
+                                        <span className="truncate">Dashboard</span>
                                     </button>
                                     <button
                                         onClick={onCreateSession}
@@ -172,39 +168,6 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                         </button>
                                     );
                                 })}
-
-                                {/* Generate Quiz — only visible when on guide page */}
-                                {activeView === "guide" && (
-                                    <button
-                                        onClick={() => hasGuide && setActiveView("quiz")}
-                                        disabled={!hasGuide}
-                                        className={`
-                      w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md
-                      text-sm transition-colors
-                      ${activeView === "quiz"
-                                                ? "bg-neutral-200/80 text-neutral-900 font-medium"
-                                                : hasGuide
-                                                    ? "text-neutral-900 hover:bg-neutral-200 hover:text-neutral-900 cursor-pointer"
-                                                    : "text-neutral-400 cursor-not-allowed opacity-50"
-                                            }
-                    `}
-                                    >
-                                        <CircleHelp className="w-3.5 h-3.5" />
-                                        Generate Quiz
-                                    </button>
-                                )}
-
-                                {/* Also show quiz nav item when actively on quiz view */}
-                                {activeView === "quiz" && (
-                                    <button
-                                        onClick={() => setActiveView("quiz")}
-                                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md
-                      text-sm bg-neutral-200/80 text-neutral-900 font-medium transition-colors"
-                                    >
-                                        <CircleHelp className="w-3.5 h-3.5" />
-                                        Quiz
-                                    </button>
-                                )}
                             </nav>
 
                             {/* Chat conversations list */}
@@ -271,8 +234,8 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                                                     : "Delete"
                                                             }
                                                             className={`p-1 rounded transition-colors shrink-0 ${confirmDelete === conv.id
-                                                                ? "bg-red-100 text-red-500"
-                                                                : "hover:bg-neutral-200 text-neutral-400"
+                                                                    ? "bg-red-100 text-red-500"
+                                                                    : "hover:bg-neutral-200 text-neutral-400"
                                                                 }`}
                                                         >
                                                             <Trash2 className="w-3 h-3" />
@@ -292,7 +255,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                             </div>
                         </>
                     ) : (
-                        /* No active session */
+                        /* No active session — dashboard sidebar */
                         <div className="flex-1 flex flex-col px-3">
                             <div className="py-3 shrink-0">
                                 <button

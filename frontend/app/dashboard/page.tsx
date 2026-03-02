@@ -5,7 +5,16 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useSessionStore } from "@/lib/session-store";
 import SessionView from "@/components/SessionView";
-import { Plus, MessageSquare, Trash2 } from "lucide-react";
+import {
+    Plus,
+    MessageSquare,
+    Trash2,
+    FileText,
+    Send,
+    Sparkles,
+    CircleHelp,
+    BookOpen,
+} from "lucide-react";
 
 export default function DashboardPage() {
     const { isAuthenticated, isLoading } = useAuth();
@@ -24,10 +33,10 @@ export default function DashboardPage() {
         return <SessionView session={activeSession} />;
     }
 
-    return <SessionsHome />;
+    return <DashboardHome />;
 }
 
-function SessionsHome() {
+function DashboardHome() {
     const { sessions, setActiveSession, deleteSession } = useSessionStore();
 
     const [hoveredSession, setHoveredSession] = useState<string | null>(null);
@@ -48,21 +57,65 @@ function SessionsHome() {
         }
     };
 
+    const features = [
+        {
+            icon: <FileText className="w-4 h-4" />,
+            title: "Smart Document Processing",
+            desc: "Upload syllabus, notes, and past papers with automatic OCR and content extraction.",
+        },
+        {
+            icon: <Send className="w-4 h-4" />,
+            title: "RAG-Powered Chat",
+            desc: "Ask questions and get answers grounded in your uploaded documents with citations.",
+        },
+        {
+            icon: <Sparkles className="w-4 h-4" />,
+            title: "Study Guide Generation",
+            desc: "Analyze syllabus and past papers to identify important chapters and exam patterns.",
+        },
+        {
+            icon: <CircleHelp className="w-4 h-4" />,
+            title: "AI Quiz Generation",
+            desc: "Generate MCQ quizzes based on your course materials to test your knowledge.",
+        },
+    ];
+
     return (
         <div className="flex flex-col h-full overflow-y-auto">
-            {/* Sessions list at the top */}
-            {sessions.length > 0 && (
-                <div className="px-6 pt-6">
-                    <div className="max-w-md mx-auto">
-                        <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-2 px-1">
+            <div className="max-w-3xl mx-auto w-full px-6 py-8">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 className="text-xl font-bold text-neutral-900 tracking-tight">
+                            Dashboard
+                        </h1>
+                        <p className="text-sm text-neutral-400 mt-0.5">
+                            Manage your study sessions
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleCreateSession}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg
+              bg-neutral-900 text-white text-sm font-medium
+              hover:bg-neutral-800 transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Create Session
+                    </button>
+                </div>
+
+                {/* Sessions grid */}
+                {sessions.length > 0 && (
+                    <div className="mb-10">
+                        <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-3">
                             Your Sessions
                         </p>
-                        <div className="space-y-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {sessions.map((session) => {
-                                const chatCount = session.conversations.length;
                                 const docCount = session.documents.filter(
                                     (d) => d.status === "success"
                                 ).length;
+                                const chatCount = session.conversations.length;
 
                                 return (
                                     <div
@@ -70,64 +123,103 @@ function SessionsHome() {
                                         onClick={() => setActiveSession(session.id)}
                                         onMouseEnter={() => setHoveredSession(session.id)}
                                         onMouseLeave={() => setHoveredSession(null)}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg
-                      hover:bg-neutral-50 cursor-pointer transition-colors
-                      border border-transparent hover:border-neutral-200 group"
+                                        className="relative border border-neutral-200 rounded-xl px-4 py-4
+                      hover:border-neutral-300 hover:bg-neutral-50
+                      cursor-pointer transition-all group"
                                     >
-                                        <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center shrink-0">
-                                            <MessageSquare className="w-4 h-4 text-neutral-400" />
+                                        <div className="flex items-start justify-between">
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="text-sm font-semibold text-neutral-900 truncate">
+                                                    {session.name}
+                                                </h3>
+                                                <div className="flex items-center gap-3 mt-2 text-xs text-neutral-400">
+                                                    <span className="flex items-center gap-1">
+                                                        <FileText className="w-3 h-3" />
+                                                        {docCount} doc{docCount !== 1 ? "s" : ""}
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <MessageSquare className="w-3 h-3" />
+                                                        {chatCount} chat{chatCount !== 1 ? "s" : ""}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="shrink-0 ml-3">
+                                                {hoveredSession === session.id ? (
+                                                    <button
+                                                        onClick={(e) => handleDeleteSession(e, session.id)}
+                                                        title={
+                                                            confirmDelete === session.id
+                                                                ? "Click again to confirm"
+                                                                : "Delete session"
+                                                        }
+                                                        className={`p-1.5 rounded-md transition-colors ${confirmDelete === session.id
+                                                                ? "bg-red-100 text-red-500"
+                                                                : "hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600"
+                                                            }`}
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-[10px] text-neutral-300">
+                                                        {new Date(session.createdAt).toLocaleDateString(
+                                                            "en-US",
+                                                            { month: "short", day: "numeric" }
+                                                        )}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-neutral-900 truncate">
-                                                {session.name}
-                                            </p>
-                                            <p className="text-[11px] text-neutral-400">
-                                                {docCount} doc{docCount !== 1 ? "s" : ""} · {chatCount} chat
-                                                {chatCount !== 1 ? "s" : ""}
-                                            </p>
-                                        </div>
-                                        {hoveredSession === session.id ? (
-                                            <button
-                                                onClick={(e) => handleDeleteSession(e, session.id)}
-                                                title={
-                                                    confirmDelete === session.id
-                                                        ? "Click again to confirm"
-                                                        : "Delete session"
-                                                }
-                                                className={`p-1.5 rounded-md transition-colors shrink-0 ${confirmDelete === session.id
-                                                        ? "bg-red-100 text-red-500"
-                                                        : "hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600"
-                                                    }`}
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        ) : (
-                                            <span className="text-[10px] text-neutral-300 shrink-0">
-                                                {new Date(session.createdAt).toLocaleDateString("en-US", {
-                                                    month: "short",
-                                                    day: "numeric",
-                                                })}
-                                            </span>
-                                        )}
                                     </div>
                                 );
                             })}
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Create button centered in remaining space */}
-            <div className="flex-1 flex items-center justify-center px-6">
-                <button
-                    onClick={handleCreateSession}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
-            bg-neutral-900 text-white text-sm font-medium
-            hover:bg-neutral-800 transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    Create Session
-                </button>
+                {sessions.length === 0 && (
+                    <div className="text-center py-12 mb-10 border border-dashed border-neutral-200 rounded-xl">
+                        <MessageSquare className="w-8 h-8 text-neutral-200 mx-auto mb-3" />
+                        <p className="text-sm text-neutral-500 mb-1">No sessions yet</p>
+                        <p className="text-xs text-neutral-400">
+                            Create your first session to get started
+                        </p>
+                    </div>
+                )}
+
+                {/* About section */}
+                <div className="border-t border-neutral-100 pt-8">
+                    <div className="mb-5">
+                        <div className="flex items-center gap-2 mb-1">
+                            <BookOpen className="w-4 h-4 text-neutral-400" />
+                            <h2 className="text-sm font-semibold text-neutral-900">
+                                ExamGuide
+                            </h2>
+                        </div>
+                        <p className="text-xs text-neutral-400 leading-relaxed max-w-lg">
+                            An AI-powered exam preparation system using unsupervised learning
+                            and RAG to help you study smarter. Upload your course materials and
+                            get intelligent study assistance.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {features.map((f, i) => (
+                            <div
+                                key={i}
+                                className="flex items-start gap-3 px-3.5 py-3 rounded-lg bg-neutral-50 border border-neutral-100"
+                            >
+                                <div className="shrink-0 mt-0.5 text-neutral-400">{f.icon}</div>
+                                <div>
+                                    <p className="text-xs font-medium text-neutral-700">
+                                        {f.title}
+                                    </p>
+                                    <p className="text-[11px] text-neutral-400 leading-relaxed mt-0.5">
+                                        {f.desc}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );

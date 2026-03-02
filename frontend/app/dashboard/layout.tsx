@@ -9,7 +9,7 @@ import CreateSessionModal from "@/components/CreateSessionModal";
 import { Menu, ChevronRight } from "lucide-react";
 
 const VIEW_LABELS: Record<SessionView, string> = {
-    dashboard: "Dashboard",
+    quickstart: "Quick Start",
     documents: "Documents",
     chat: "Chat",
     guide: "Study Guide",

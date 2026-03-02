@@ -15,9 +15,10 @@ import type {
     StudyGuideReport,
     ChatMessage,
     ChatConversation,
+    QuizRecord,
 } from "./types";
 
-export type SessionView = "dashboard" | "documents" | "chat" | "guide" | "quiz";
+export type SessionView = "quickstart" | "documents" | "chat" | "guide" | "quiz";
 
 interface SessionStore {
     sessions: Session[];
@@ -46,7 +47,6 @@ interface SessionStore {
     ) => void;
     removeDocument: (sessionId: string, docId: string) => void;
 
-    // Conversation management
     createConversation: (sessionId: string) => ChatConversation;
     setActiveConversation: (conversationId: string | null) => void;
     deleteConversation: (sessionId: string, conversationId: string) => void;
@@ -66,6 +66,9 @@ interface SessionStore {
         sessionId: string,
         guide: StudyGuideReport | null
     ) => void;
+
+    addQuizRecord: (sessionId: string, record: QuizRecord) => void;
+    deleteQuizRecord: (sessionId: string, quizId: string) => void;
 
     setPendingChatPrompt: (prompt: string | null) => void;
     navigateToChatWithPrompt: (prompt: string) => void;
@@ -143,7 +146,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-    const [activeView, setActiveView] = useState<SessionView>("dashboard");
+    const [activeView, setActiveView] = useState<SessionView>("quickstart");
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [pendingChatPrompt, setPendingChatPrompt] = useState<string | null>(null);
     const [hydrated, setHydrated] = useState(false);
@@ -153,6 +156,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         const migrated = loaded.map((s) => ({
             ...s,
             cachedGuide: s.cachedGuide ?? null,
+            quizRecords: s.quizRecords ?? [],
             conversations: s.conversations ?? (
                 s.messages && (s as any).messages.length > 0
                     ? [{
@@ -165,7 +169,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
                     : []
             ),
         }));
-        // Remove old messages field
         const cleaned = migrated.map(({ messages, ...rest }: any) => rest);
         setSessions(cleaned);
         setActiveSessionId(loadFromStorage<string | null>(ACTIVE_SS_KEY, null));
@@ -206,13 +209,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
                 createdAt: now,
                 updatedAt: now,
                 documents: [],
+                quizRecords: [],
                 conversations: [],
                 cachedGuide: null,
             };
             setSessions((prev) => [session, ...prev]);
             setActiveSessionId(session.id);
             setActiveConversationId(null);
-            setActiveView("dashboard");
+            setActiveView("quickstart");
             return session;
         },
         []
@@ -234,7 +238,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setSessions((prev) => prev.filter((s) => s.id !== sessionId));
         setActiveSessionId((current) => {
             if (current === sessionId) {
-                setActiveView("dashboard");
+                setActiveView("quickstart");
                 setActiveConversationId(null);
                 return null;
             }
@@ -245,13 +249,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const setActiveSessionCb = useCallback((sessionId: string | null) => {
         setActiveSessionId(sessionId);
         setActiveConversationId(null);
-        setActiveView("dashboard");
+        setActiveView("quickstart");
     }, []);
 
     const setActiveViewCb = useCallback((view: SessionView) => {
         setActiveView(view);
-        // When switching to chat, don't auto-select a conversation
-        // Let the user pick one or create new
     }, []);
 
     const addDocument = useCallback(
@@ -305,8 +307,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         },
         []
     );
-
-    // ── Conversation management ──
 
     const createConversation = useCallback(
         (sessionId: string): ChatConversation => {
@@ -378,7 +378,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
                                 messages: [...conv.messages, message],
                                 updatedAt: now,
                             };
-                            // Auto-title from first user message
                             if (
                                 updated.title === "New Chat" &&
                                 message.role === "user"
@@ -439,9 +438,47 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         []
     );
 
+    const addQuizRecord = useCallback(
+        (sessionId: string, record: QuizRecord) => {
+            const now = new Date().toISOString();
+            setSessions((prev) =>
+                prev.map((s) =>
+                    s.id === sessionId
+                        ? {
+                            ...s,
+                            quizRecords: [...(s.quizRecords || []), record],
+                            updatedAt: now,
+                        }
+                        : s
+                )
+            );
+        },
+        []
+    );
+
+    const deleteQuizRecord = useCallback(
+        (sessionId: string, quizId: string) => {
+            const now = new Date().toISOString();
+            setSessions((prev) =>
+                prev.map((s) =>
+                    s.id === sessionId
+                        ? {
+                            ...s,
+                            quizRecords: (s.quizRecords || []).filter(
+                                (q) => q.id !== quizId
+                            ),
+                            updatedAt: now,
+                        }
+                        : s
+                )
+            );
+        },
+        []
+    );
+
     const navigateToChatWithPrompt = useCallback((prompt: string) => {
         setPendingChatPrompt(prompt);
-        setActiveConversationId(null); // Will create new conversation
+        setActiveConversationId(null);
         setActiveView("chat");
     }, []);
 
@@ -474,6 +511,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         updateConversationTitle,
         getActiveConversation,
         setCachedGuide,
+        addQuizRecord,
+        deleteQuizRecord,
         setPendingChatPrompt,
         navigateToChatWithPrompt,
         getActiveSession,
