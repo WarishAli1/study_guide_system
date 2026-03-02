@@ -151,13 +151,6 @@ export default function StudyGuideView({ session }: Props) {
         setActiveView("chat");
     };
 
-    const handleAskTopicInChat = (topic: string, chapterName: string) => {
-        const prompt = `Explain the concept of "${topic}" in detail based on the notes. This topic is from ${chapterName}.`;
-        setTopicsModal(null);
-        setActiveConversation(null);
-        setPendingChatPrompt(prompt);
-        setActiveView("chat");
-    };
 
     // ─── Pre-report states ──────────────────────────────
 
@@ -207,13 +200,19 @@ export default function StudyGuideView({ session }: Props) {
 
     // ─── Report view ────────────────────────────────────
 
-    const sortedChapters = [...report.chapters].sort((a, b) => Number(a.chapter_id) - Number(b.chapter_id));
+    const sortedChapters = [...report.chapters].sort((a, b) => {
+        const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+        const priorityDiff =
+            priorityOrder[b.study_priority] - priorityOrder[a.study_priority];
+        if (priorityDiff !== 0) return priorityDiff;
+        return Number(b.importance_score) - Number(a.importance_score);
+    });
     const displayTitle = resolveDisplayTitle(report, session.name);
 
     return (
         <div className="flex-1 flex overflow-hidden">
             <div className="flex-1 overflow-y-auto">
-                <div className="max-w-4xl mx-auto px-6 py-6">
+                <div className="max-w-5xl mx-auto px-6 py-6">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-8">
                         <div>
@@ -285,7 +284,6 @@ export default function StudyGuideView({ session }: Props) {
                                 isExpanded={expandedChapter === ch.chapter_id}
                                 onToggle={() => setExpandedChapter(expandedChapter === ch.chapter_id ? null : ch.chapter_id)}
                                 onQuestionClick={handleQuestionClick}
-                                onShowAllTopics={(topics) => setTopicsModal({ chapterName: ch.chapter_name, topics })}
                             />
                         ))}
                     </div>
@@ -354,88 +352,6 @@ export default function StudyGuideView({ session }: Props) {
                     </div>
                 )}
             </div>
-
-            {/* Topics modal */}
-            {topicsModal && (
-                <TopicsModal
-                    chapterName={topicsModal.chapterName}
-                    topics={topicsModal.topics}
-                    onClose={() => setTopicsModal(null)}
-                    onAskInChat={handleAskTopicInChat}
-                />
-            )}
-        </div>
-    );
-}
-
-/* ─── Topics Modal ─────────────────────────────────────────────────── */
-
-function TopicsModal({
-    chapterName,
-    topics,
-    onClose,
-    onAskInChat,
-}: {
-    chapterName: string;
-    topics: string[];
-    onClose: () => void;
-    onAskInChat: (topic: string, chapterName: string) => void;
-}) {
-    useEffect(() => {
-        const handler = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-        };
-        document.addEventListener("keydown", handler);
-        return () => document.removeEventListener("keydown", handler);
-    }, [onClose]);
-
-    return (
-        <div
-            className="fixed inset-0 z-[100] flex items-center justify-center"
-            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-        >
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-
-            <div className="relative bg-white rounded-xl border border-neutral-200 shadow-xl
-                w-[50%] max-h-[75vh] overflow-hidden flex flex-col z-10">
-                {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 shrink-0">
-                    <div>
-                        <h3 className="text-sm font-semibold text-neutral-900">Key Topics</h3>
-                        <p className="text-xs text-neutral-400 mt-0.5">{chapterName.replace(/\n/g, " ")}</p>
-                    </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors">
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-
-                {/* Topics list */}
-                <div className="flex-1 overflow-y-auto px-5 py-4">
-                    <div className="space-y-1">
-                        {topics.map((topic, i) => (
-                            <div
-                                key={i}
-                                className="flex items-center justify-between px-3 py-2.5 rounded-lg
-                                    hover:bg-neutral-50 transition-colors group"
-                            >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                    <span className="text-xs text-neutral-400 font-mono w-5 shrink-0">{i + 1}</span>
-                                    <span className="text-sm text-neutral-700">{topic}</span>
-                                </div>
-                                <button
-                                    onClick={() => onAskInChat(topic, chapterName)}
-                                    className="flex items-center gap-1 text-xs text-neutral-400
-                                        hover:text-neutral-600 transition-colors
-                                        opacity-0 group-hover:opacity-100 shrink-0 ml-3"
-                                >
-                                    <MessageSquare className="w-3 h-3" />
-                                    Ask in Chat
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
@@ -447,15 +363,16 @@ function ChapterRow({
     isExpanded,
     onToggle,
     onQuestionClick,
-    onShowAllTopics,
 }: {
     chapter: GuideChapter;
     isExpanded: boolean;
     onToggle: () => void;
     onQuestionClick: (q: GuideQuestion, chapterName: string) => void;
-    onShowAllTopics: (topics: string[]) => void;
 }) {
     const [showAllQuestions, setShowAllQuestions] = useState(false);
+    const [showAllTopics, setShowAllTopics] = useState(false);
+
+    const { setActiveConversation, setPendingChatPrompt, setActiveView } = useSessionStore();
 
     const priorityStyles = {
         HIGH: "bg-neutral-900 text-white",
@@ -470,14 +387,20 @@ function ChapterRow({
     const singleQuestions = faq.filter((q) => q.freq <= 1);
     const displayedQuestions = showAllQuestions ? faq : repeatedQuestions;
 
-    // Show max 2 lines of topics (~6 items), rest behind "See more"
     const MAX_VISIBLE_TOPICS = 6;
-    const visibleTopics = importantTopics.slice(0, MAX_VISIBLE_TOPICS);
+    const visibleTopics = showAllTopics ? importantTopics : importantTopics.slice(0, MAX_VISIBLE_TOPICS);
     const hasMoreTopics = importantTopics.length > MAX_VISIBLE_TOPICS;
+
+    const handleTopicChat = (topic: string) => {
+        const prompt = `Explain the concept of "${topic}" in detail based on the notes. This topic is from ${chapterName}.`;
+        setActiveConversation(null);
+        setPendingChatPrompt(prompt);
+        setActiveView("chat");
+    };
 
     return (
         <div className="border border-neutral-200 rounded-xl overflow-hidden">
-            {/* Chapter header — always visible */}
+            {/* Chapter header */}
             <button
                 onClick={onToggle}
                 className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-neutral-50 transition-colors text-left"
@@ -496,28 +419,6 @@ function ChapterRow({
                     <h3 className="text-sm font-semibold text-neutral-900 truncate">
                         {chapterName}
                     </h3>
-
-                    {/* Key topics preview — 2 lines max */}
-                    {visibleTopics.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5 max-h-[3.2rem] overflow-hidden">
-                            {visibleTopics.map((t, i) => (
-                                <span key={i} className="text-[11px] text-neutral-500 bg-neutral-100 rounded px-1.5 py-0.5">
-                                    {t}
-                                </span>
-                            ))}
-                            {hasMoreTopics && (
-                                <span
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onShowAllTopics(importantTopics);
-                                    }}
-                                    className="text-[11px] text-neutral-400 hover:text-neutral-600 cursor-pointer px-1.5 py-0.5 underline underline-offset-2"
-                                >
-                                    +{importantTopics.length - MAX_VISIBLE_TOPICS} more
-                                </span>
-                            )}
-                        </div>
-                    )}
                 </div>
 
                 {/* Right side info */}
@@ -544,38 +445,38 @@ function ChapterRow({
                 </div>
             </button>
 
-            {/* Expanded content — questions */}
+            {/* Expanded content */}
             {isExpanded && (
                 <div className="border-t border-neutral-100 px-4 py-4">
-                    {/* All topics button if they exist */}
+                    {/* Key topics */}
                     {importantTopics.length > 0 && (
                         <div className="mb-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium flex items-center gap-1.5">
-                                    <BookOpen className="w-3 h-3" />
-                                    Key Topics ({importantTopics.length})
-                                </p>
-                                {importantTopics.length > MAX_VISIBLE_TOPICS && (
-                                    <button
-                                        onClick={() => onShowAllTopics(importantTopics)}
-                                        className="text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors underline underline-offset-2"
-                                    >
-                                        See all
-                                    </button>
-                                )}
-                            </div>
+                            <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium flex items-center gap-1.5 mb-2.5">
+                                <BookOpen className="w-3 h-3" />
+                                Key Topics ({importantTopics.length})
+                            </p>
                             <div className="flex flex-wrap gap-1.5">
-                                {importantTopics.slice(0, 10).map((t, i) => (
-                                    <span key={i} className="text-xs text-neutral-600 bg-neutral-50 border border-neutral-200 rounded-md px-2 py-1">
-                                        {t}
-                                    </span>
-                                ))}
-                                {importantTopics.length > 10 && (
+                                {visibleTopics.map((t, i) => (
                                     <button
-                                        onClick={() => onShowAllTopics(importantTopics)}
-                                        className="text-xs text-neutral-400 hover:text-neutral-600 px-2 py-1 transition-colors"
+                                        key={i}
+                                        onClick={() => handleTopicChat(t)}
+                                        className="text-xs text-neutral-600 bg-neutral-50 border border-neutral-200
+                                            rounded-md px-2 py-1 hover:bg-neutral-100 hover:border-neutral-300
+                                            transition-colors cursor-pointer group flex items-center gap-1"
                                     >
-                                        +{importantTopics.length - 10} more
+                                        {t}
+                                        <MessageSquare className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400" />
+                                    </button>
+                                ))}
+                                {hasMoreTopics && (
+                                    <button
+                                        onClick={() => setShowAllTopics(!showAllTopics)}
+                                        className="text-xs text-neutral-400 hover:text-neutral-600 px-2 py-1
+                                            transition-colors underline underline-offset-2"
+                                    >
+                                        {showAllTopics
+                                            ? "Show less"
+                                            : `+${importantTopics.length - MAX_VISIBLE_TOPICS} more`}
                                     </button>
                                 )}
                             </div>

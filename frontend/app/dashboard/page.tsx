@@ -82,7 +82,7 @@ function DashboardHome() {
 
     return (
         <div className="flex flex-col h-full overflow-y-auto">
-            <div className="max-w-3xl mx-auto w-full px-6 py-8">
+            <div className="max-w-5xl mx-auto w-full px-6 py-8">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div>
@@ -153,8 +153,8 @@ function DashboardHome() {
                                                                 : "Delete session"
                                                         }
                                                         className={`p-1.5 rounded-md transition-colors ${confirmDelete === session.id
-                                                                ? "bg-red-100 text-red-500"
-                                                                : "hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600"
+                                                            ? "bg-red-100 text-red-500"
+                                                            : "hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600"
                                                             }`}
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
