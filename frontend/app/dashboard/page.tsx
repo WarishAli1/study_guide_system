@@ -93,20 +93,22 @@ function DashboardHome() {
                             Manage your study sessions
                         </p>
                     </div>
-                    <button
-                        onClick={handleCreateSession}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg
-              bg-neutral-900 text-white text-sm font-medium
-              hover:bg-neutral-800 transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Create Session
-                    </button>
+                    {sessions.length > 0 && (
+                        <button
+                            onClick={handleCreateSession}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg
+                bg-neutral-900 text-white text-sm font-medium
+                hover:bg-neutral-800 transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Create Session
+                        </button>
+                    )}
                 </div>
 
-                {/* Sessions grid */}
-                {sessions.length > 0 && (
-                    <div className="mb-10">
+                {sessions.length > 0 ? (
+                    /* Sessions grid */
+                    <div>
                         <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-3">
                             Your Sessions
                         </p>
@@ -153,8 +155,8 @@ function DashboardHome() {
                                                                 : "Delete session"
                                                         }
                                                         className={`p-1.5 rounded-md transition-colors ${confirmDelete === session.id
-                                                            ? "bg-red-100 text-red-500"
-                                                            : "hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600"
+                                                                ? "bg-red-100 text-red-500"
+                                                                : "hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600"
                                                             }`}
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
@@ -174,52 +176,55 @@ function DashboardHome() {
                             })}
                         </div>
                     </div>
-                )}
-
-                {sessions.length === 0 && (
-                    <div className="text-center py-12 mb-10 border border-dashed border-neutral-200 rounded-xl">
-                        <MessageSquare className="w-8 h-8 text-neutral-200 mx-auto mb-3" />
-                        <p className="text-sm text-neutral-500 mb-1">No sessions yet</p>
-                        <p className="text-xs text-neutral-400">
-                            Create your first session to get started
-                        </p>
-                    </div>
-                )}
-
-                {/* About section */}
-                <div className="border-t border-neutral-100 pt-8">
-                    <div className="mb-5">
-                        <div className="flex items-center gap-2 mb-1">
-                            <BookOpen className="w-4 h-4 text-neutral-400" />
-                            <h2 className="text-sm font-semibold text-neutral-900">
-                                ExamGuide
-                            </h2>
+                ) : (
+                    /* Empty state with info */
+                    <div className="flex flex-col items-center justify-center py-16">
+                        <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center mb-6">
+                            <BookOpen className="w-8 h-8 text-neutral-300" />
                         </div>
-                        <p className="text-xs text-neutral-400 leading-relaxed max-w-lg">
-                            An AI-powered exam preparation system using unsupervised learning
-                            and RAG to help you study smarter. Upload your course materials and
-                            get intelligent study assistance.
+                        <h2 className="text-lg font-bold text-neutral-900 mb-2">
+                            Welcome to ExamGuide
+                        </h2>
+                        <p className="text-sm text-neutral-500 text-center max-w-md mb-8">
+                            An AI-powered exam preparation system. Upload your course
+                            materials and get intelligent study assistance powered by
+                            unsupervised learning and RAG.
                         </p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {features.map((f, i) => (
-                            <div
-                                key={i}
-                                className="flex items-start gap-3 px-3.5 py-3 rounded-lg bg-neutral-50 border border-neutral-100"
-                            >
-                                <div className="shrink-0 mt-0.5 text-neutral-400">{f.icon}</div>
-                                <div>
-                                    <p className="text-xs font-medium text-neutral-700">
-                                        {f.title}
-                                    </p>
-                                    <p className="text-[11px] text-neutral-400 leading-relaxed mt-0.5">
-                                        {f.desc}
-                                    </p>
+
+                        <button
+                            onClick={handleCreateSession}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
+                bg-neutral-900 text-white text-sm font-medium
+                hover:bg-neutral-800 transition-colors mb-10"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Create Your First Session
+                        </button>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+                            {features.map((f, i) => (
+                                <div
+                                    key={i}
+                                    className="flex items-start gap-3.5 px-4 py-4 rounded-xl
+                    bg-neutral-50 border border-neutral-100"
+                                >
+                                    <div className="shrink-0 w-9 h-9 rounded-lg bg-white border border-neutral-200
+                    flex items-center justify-center text-neutral-400">
+                                        {f.icon}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-neutral-800 mb-0.5">
+                                            {f.title}
+                                        </p>
+                                        <p className="text-xs text-neutral-400 leading-relaxed">
+                                            {f.desc}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
