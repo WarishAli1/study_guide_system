@@ -60,12 +60,12 @@ function DashboardHome() {
     const features = [
         {
             icon: <FileText className="w-4 h-4" />,
-            title: "Smart Document Processing",
-            desc: "Upload syllabus, notes, and past papers with automatic OCR and content extraction.",
+            title: "Document Processing",
+            desc: "Upload syllabus, notes, and past papers with content extraction.",
         },
         {
             icon: <Send className="w-4 h-4" />,
-            title: "RAG-Powered Chat",
+            title: "Ask Questions About Your Documents",
             desc: "Ask questions and get answers grounded in your uploaded documents with citations.",
         },
         {
@@ -75,7 +75,7 @@ function DashboardHome() {
         },
         {
             icon: <CircleHelp className="w-4 h-4" />,
-            title: "AI Quiz Generation",
+            title: "Take Quiz Tests",
             desc: "Generate MCQ quizzes based on your course materials to test your knowledge.",
         },
     ];
@@ -155,8 +155,8 @@ function DashboardHome() {
                                                                 : "Delete session"
                                                         }
                                                         className={`p-1.5 rounded-md transition-colors ${confirmDelete === session.id
-                                                                ? "bg-red-100 text-red-500"
-                                                                : "hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600"
+                                                            ? "bg-red-100 text-red-500"
+                                                            : "hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600"
                                                             }`}
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
@@ -186,9 +186,8 @@ function DashboardHome() {
                             Welcome to ExamGuide
                         </h2>
                         <p className="text-sm text-neutral-500 text-center max-w-md mb-8">
-                            An AI-powered exam preparation system. Upload your course
-                            materials and get intelligent study assistance powered by
-                            unsupervised learning and RAG.
+                            A system that helps you prepare for your exam. Upload your course
+                            materials and get study assistance.
                         </p>
 
                         <button
