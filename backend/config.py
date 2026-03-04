@@ -219,5 +219,45 @@ Rules:
     (6, 8):  "Structure as: Definition → Explanation → Key Points (bulleted) → Brief Example.",
     (9, 99): "Structure as: Definition → Detailed Explanation → Key Points → Example → Diagram description if applicable → Summary.",
 }
+
+    QUIZ_SYSTEM_PROMPT = """
+    You are a quiz generator for exam preparation. You generate MCQ questions strictly based on provided study material.
+    """
+
+    QUIZ_USER_PROMPT = """
+    You are a quiz generator for exam preparation. Generate exactly {num_questions} multiple-choice questions (MCQs) based ONLY on the provided study material below.
+
+    STRICT RULES:
+    1. Every question and every answer option MUST be directly based on the provided content. Do NOT use any external knowledge.
+    2. Questions should be short (1-3 sentences max), suitable for 1-mark MCQ format.
+    3. Each question has exactly 4 options: A, B, C, D. Only ONE is correct.
+    4. The correct answer must be factually accurate according to the provided content.
+    5. Distractor options (wrong answers) should be plausible but clearly wrong based on the content.
+    6. For technical/code subjects, you may ask about correct syntax, definitions, or short code snippets.
+    7. Spread questions across different topics from the content.
+    8. Keep answers concise — each option should be at most 1-2 sentences.
+    9. Distribute correct answers evenly: roughly equal numbers of A, B, C, D should be correct across all questions.
+
+    STUDY MATERIAL:
+    ---
+    {context_text}
+    ---
+
+    Respond with ONLY a valid JSON array. No markdown, no explanation, no extra text. Format:
+    [
+    {{
+        "question": "What is...?",
+        "A": "Option A text",
+        "B": "Option B text",
+        "C": "Option C text",
+        "D": "Option D text",
+        "correct": "B",
+        "explanation": "Brief 1-sentence explanation of why this is correct.",
+        "source_topic": "The topic/subtopic name this question is about"
+    }}
+    ]
+
+    Generate exactly {num_questions} questions now:
+    """
     DEBUG = True
 

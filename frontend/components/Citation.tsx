@@ -29,7 +29,6 @@ function CitationModal({
 }) {
     const modalRef = useRef<HTMLDivElement>(null);
 
-    // Close on Escape
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
@@ -48,28 +47,28 @@ function CitationModal({
             }}
         >
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
 
             {/* Modal */}
             <div
                 ref={modalRef}
-                className="relative bg-white rounded-xl border border-neutral-200 shadow-xl
+                className="relative bg-white rounded-2xl border border-blue-100 shadow-xl shadow-blue-100/40
           w-[90%] max-w-lg max-h-[60vh] overflow-hidden flex flex-col z-10"
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 shrink-0">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-blue-50 bg-blue-50/30 shrink-0">
                     <div className="flex items-center gap-2.5">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-neutral-900 text-white text-xs font-bold">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-blue-600 text-white text-xs font-bold">
                             {source.index}
                         </span>
-                        <h3 className="text-sm font-semibold text-neutral-900">
+                        <h3 className="text-sm font-semibold text-slate-900">
                             Source Citation
                         </h3>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400
-              hover:text-neutral-600 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-blue-100 text-slate-400
+              hover:text-slate-600 transition-colors"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -79,12 +78,12 @@ function CitationModal({
                 <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
                     {/* Chapter info */}
                     <div>
-                        <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1.5">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-1.5">
                             Chapter
                         </p>
                         <div className="flex items-start gap-2">
-                            <BookOpen className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
-                            <p className="text-sm font-medium text-neutral-800">
+                            <BookOpen className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                            <p className="text-sm font-medium text-slate-800">
                                 {chapterDisplay}
                             </p>
                         </div>
@@ -92,12 +91,12 @@ function CitationModal({
 
                     {/* Section info */}
                     <div>
-                        <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1.5">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-1.5">
                             Section
                         </p>
                         <div className="flex items-start gap-2">
-                            <FileText className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
-                            <p className="text-sm text-neutral-700">
+                            <FileText className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                            <p className="text-sm text-slate-700">
                                 {source.subtopic_name}
                             </p>
                         </div>
@@ -105,16 +104,16 @@ function CitationModal({
 
                     {/* Location path */}
                     <div>
-                        <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1.5">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-1.5">
                             Location
                         </p>
-                        <div className="bg-neutral-50 rounded-lg px-3 py-2.5 border border-neutral-100">
-                            <div className="flex items-center gap-1.5 text-xs text-neutral-600">
-                                <span className="font-medium">{chapterDisplay}</span>
-                                <span className="text-neutral-300">›</span>
-                                <span className="font-medium">§ {source.subtopic_id}</span>
-                                <span className="text-neutral-300">›</span>
-                                <span className="text-neutral-500">{source.subtopic_name}</span>
+                        <div className="bg-blue-50/60 rounded-lg px-3 py-2.5 border border-blue-100">
+                            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                                <span className="font-medium text-blue-700">{chapterDisplay}</span>
+                                <span className="text-blue-200">›</span>
+                                <span className="font-medium text-slate-600">§ {source.subtopic_id}</span>
+                                <span className="text-blue-200">›</span>
+                                <span className="text-slate-500">{source.subtopic_name}</span>
                             </div>
                         </div>
                     </div>
@@ -122,11 +121,11 @@ function CitationModal({
                     {/* Referenced text snippet */}
                     {source.source_text ? (
                         <div>
-                            <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1.5">
+                            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-1.5">
                                 Referenced Text
                             </p>
-                            <div className="bg-neutral-50 rounded-lg px-3 py-2.5 border border-neutral-100 max-h-48 overflow-y-auto">
-                                <p className="text-xs text-neutral-600 leading-relaxed whitespace-pre-wrap">
+                            <div className="bg-blue-50/40 rounded-lg px-3 py-2.5 border border-blue-100 max-h-48 overflow-y-auto">
+                                <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">
                                     {source.source_text}
                                 </p>
                             </div>
@@ -295,8 +294,8 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
     if (isUser) {
         return (
             <div className="flex justify-end">
-                <div className="bg-neutral-100 rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%]">
-                    <p className="text-sm text-neutral-900 whitespace-pre-wrap">
+                <div className="bg-slate-100 rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%]">
+                    <p className="text-sm text-slate-800 whitespace-pre-wrap">
                         {message.content}
                     </p>
                 </div>
@@ -315,8 +314,8 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
                 <div className="pt-1">
                     <button
                         onClick={() => setShowRelated(!showRelated)}
-                        className="flex items-center gap-1.5 text-xs text-neutral-400
-              hover:text-neutral-600 transition-colors"
+                        className="flex items-center gap-1.5 text-xs text-slate-400
+              hover:text-blue-600 transition-colors"
                     >
                         <HelpCircle className="w-3 h-3" />
                         {message.relatedQuestions!.length} related past question
@@ -332,9 +331,9 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
                             {message.relatedQuestions!.map((q, i) => (
                                 <div
                                     key={i}
-                                    className="text-xs bg-amber-50 rounded px-2.5 py-1.5 border border-amber-100"
+                                    className="text-xs bg-amber-50 rounded-lg px-2.5 py-1.5 border border-amber-100"
                                 >
-                                    <p className="text-neutral-700 line-clamp-2">
+                                    <p className="text-slate-700 line-clamp-2">
                                         {q.question}
                                     </p>
                                     <div className="flex gap-2 mt-1 text-amber-600">

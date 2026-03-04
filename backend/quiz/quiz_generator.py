@@ -1,11 +1,3 @@
-"""
-Quiz generator — LLM + RAG approach.
-1. Load chapter notes and past questions for the subject.
-2. Sample diverse content chunks across chapters.
-3. Send to LLM with strict instructions to generate MCQs grounded ONLY in provided content.
-4. Parse and return structured quiz data.
-"""
-
 import os
 import json
 import random
@@ -17,10 +9,12 @@ from config import Config
 
 logger = logging.getLogger(__name__)
 
-# ── File loaders ────────────────────────────────────────────────────
+
+QUIZ_SYSTEM_PROMPT = Config.QUIZ_SYSTEM_PROMPT
+QUIZ_USER_PROMPT = Config.QUIZ_USER_PROMPT
+
 
 def _find_json_files(directory: str) -> List[str]:
-    """Find all JSON files in a directory."""
     if not os.path.isdir(directory):
         return []
     return [
@@ -38,7 +32,6 @@ def _load_json(path: str):
 
 
 def _load_chapter_data(subject_name: str) -> List[Dict]:
-    """Load chapter JSON data for the subject."""
     chapter_dir = os.path.join(Config.CHAPTER_JSON_DIR, subject_name)
     files = _find_json_files(chapter_dir)
     all_chapters = []
@@ -52,7 +45,6 @@ def _load_chapter_data(subject_name: str) -> List[Dict]:
 
 
 def _load_dataset(subject_name: str) -> List[Dict]:
-    """Load generated dataset (past exam Q&A) for the subject."""
     path = os.path.join(
         Config.DATASETS_DIR, "generated_datasets", f"{subject_name}_dataset.json"
     )
@@ -63,7 +55,6 @@ def _load_dataset(subject_name: str) -> List[Dict]:
 
 
 def _load_question_data(subject_name: str) -> List[Dict]:
-    """Load scanned question data for the subject."""
     question_dir = os.path.join(Config.QUESTION_JSON_DIR, subject_name)
     files = _find_json_files(question_dir)
     all_questions = []
@@ -76,23 +67,15 @@ def _load_question_data(subject_name: str) -> List[Dict]:
     return all_questions
 
 
-# ── Content preparation ─────────────────────────────────────────────
-
 def _build_context_chunks(chapters: List[Dict], dataset: List[Dict]) -> List[Dict]:
-    """
-    Build a list of content chunks from chapters and dataset entries.
-    Each chunk has: text, chapter_name, subtopic_name
-    """
     chunks = []
 
-    # From chapter subtopics
     for ch in chapters:
         ch_name = ch.get("chapter_name", "Unknown Chapter")
         for sub in ch.get("subtopics", []):
             para = sub.get("paragraph", "").strip()
             sub_name = sub.get("subtopic_name", "")
             if para and len(para) > 30:
-                # Trim very long paragraphs
                 text = para[:1500] if len(para) > 1500 else para
                 chunks.append({
                     "text": text,
@@ -101,7 +84,6 @@ def _build_context_chunks(chapters: List[Dict], dataset: List[Dict]) -> List[Dic
                     "source": "notes",
                 })
 
-    # From dataset (past exam Q&A pairs — these give good quiz material)
     for item in dataset:
         context = item.get("context", "").strip()
         question = item.get("question", "").strip()
@@ -119,21 +101,17 @@ def _build_context_chunks(chapters: List[Dict], dataset: List[Dict]) -> List[Dic
 
 
 def _select_diverse_chunks(chunks: List[Dict], max_chunks: int = 15) -> List[Dict]:
-    """Select diverse chunks spread across chapters."""
     if len(chunks) <= max_chunks:
         return chunks
 
-    # Group by chapter
     by_chapter: Dict[str, List[Dict]] = {}
     for c in chunks:
         key = c.get("chapter_name", "other")
         by_chapter.setdefault(key, []).append(c)
 
-    # Shuffle within each chapter
     for v in by_chapter.values():
         random.shuffle(v)
 
-    # Round-robin selection
     selected = []
     keys = list(by_chapter.keys())
     random.shuffle(keys)
@@ -149,8 +127,6 @@ def _select_diverse_chunks(chunks: List[Dict], max_chunks: int = 15) -> List[Dic
     return selected
 
 
-# ── LLM call ────────────────────────────────────────────────────────
-
 _client = None
 
 def _get_client():
@@ -164,17 +140,22 @@ def _get_client():
     return _client
 
 
-def _call_llm(prompt: str) -> str:
-    """Call the LLM using OpenAI client with Groq backend — same as chat module."""
+def _call_llm(context_text: str, num_questions: int) -> str:
     client = _get_client()
     response = client.chat.completions.create(
         model=Config.MODEL_NAME,
         messages=[
             {
                 "role": "system",
-                "content": "You are a quiz generator for exam preparation. You generate MCQ questions strictly based on provided study material.",
+                "content": QUIZ_SYSTEM_PROMPT.strip(),
             },
-            {"role": "user", "content": prompt},
+            {
+                "role": "user",
+                "content": QUIZ_USER_PROMPT.format(
+                    num_questions=num_questions,
+                    context_text=context_text,
+                ),
+            },
         ],
         temperature=0.3,
         max_tokens=4000,
@@ -182,52 +163,12 @@ def _call_llm(prompt: str) -> str:
     return response.choices[0].message.content
 
 
-def _build_quiz_prompt(context_text: str, num_questions: int = 10) -> str:
-    return f"""You are a quiz generator for exam preparation. Generate exactly {num_questions} multiple-choice questions (MCQs) based ONLY on the provided study material below. 
-
-STRICT RULES:
-1. Every question and every answer option MUST be directly based on the provided content. Do NOT use any external knowledge.
-2. Questions should be short (1-3 sentences max), suitable for 1-mark MCQ format.
-3. Each question has exactly 4 options: A, B, C, D. Only ONE is correct.
-4. The correct answer must be factually accurate according to the provided content.
-5. Distractor options (wrong answers) should be plausible but clearly wrong based on the content.
-6. For technical/code subjects, you may ask about correct syntax, definitions, or short code snippets.
-7. Spread questions across different topics from the content.
-8. Keep answers concise — each option should be at most 1-2 sentences.
-
-STUDY MATERIAL:
----
-{context_text}
----
-
-Respond with ONLY a valid JSON array. No markdown, no explanation, no extra text. Format:
-[
-  {{
-    "question": "What is...?",
-    "A": "Option A text",
-    "B": "Option B text",
-    "C": "Option C text",
-    "D": "Option D text",
-    "correct": "B",
-    "explanation": "Brief 1-sentence explanation of why this is correct.",
-    "source_topic": "The topic/subtopic name this question is about"
-  }}
-]
-
-Generate exactly {num_questions} questions now:"""
-
-
 def _parse_quiz_response(response_text: str) -> List[Dict]:
-    """Parse the LLM response into structured quiz data."""
     text = response_text.strip()
-
-    # Try to extract JSON array from response
-    # Remove markdown code blocks if present
     text = re.sub(r"^```(?:json)?\s*", "", text)
     text = re.sub(r"\s*```$", "", text)
     text = text.strip()
 
-    # Find the JSON array
     start = text.find("[")
     end = text.rfind("]")
     if start != -1 and end != -1 and end > start:
@@ -240,7 +181,6 @@ def _parse_quiz_response(response_text: str) -> List[Dict]:
     except json.JSONDecodeError:
         pass
 
-    # Fallback: try to find individual JSON objects
     objects = []
     for match in re.finditer(r"\{[^{}]+\}", text):
         try:
@@ -253,16 +193,27 @@ def _parse_quiz_response(response_text: str) -> List[Dict]:
     return objects
 
 
-# ── Main entry point ────────────────────────────────────────────────
+def _shuffle_correct_answer(q: Dict) -> Dict:
+    labels = ["A", "B", "C", "D"]
+    correct_label = q.get("correct", "A").upper()
+    correct_text = q.get(correct_label, "")
+
+    wrong_texts = [q[l] for l in labels if l != correct_label and q.get(l)]
+    random.shuffle(wrong_texts)
+
+    new_correct_pos = random.randint(0, 3)
+    new_options = wrong_texts.copy()
+    new_options.insert(new_correct_pos, correct_text)
+
+    for i, label in enumerate(labels):
+        q[label] = new_options[i]
+    q["correct"] = labels[new_correct_pos]
+    return q
+
 
 def generate_quiz(subject_name: str, num_questions: int = 10) -> Dict:
-    """
-    Generate a quiz with MCQ questions for the given subject.
-    Uses RAG (retrieves content from documents) + LLM (generates questions).
-    """
     logger.info(f"[Quiz] Starting quiz generation for '{subject_name}'")
 
-    # Load all available content
     chapters = _load_chapter_data(subject_name)
     dataset = _load_dataset(subject_name)
 
@@ -273,17 +224,13 @@ def generate_quiz(subject_name: str, num_questions: int = 10) -> Dict:
             f"{Config.DATASETS_DIR}/generated_datasets/{subject_name}_dataset.json"
         )
 
-    logger.info(
-        f"[Quiz] Loaded {len(chapters)} chapters, {len(dataset)} dataset entries"
-    )
+    logger.info(f"[Quiz] Loaded {len(chapters)} chapters, {len(dataset)} dataset entries")
 
-    # Build and select diverse content chunks
     all_chunks = _build_context_chunks(chapters, dataset)
     selected_chunks = _select_diverse_chunks(all_chunks, max_chunks=15)
 
     logger.info(f"[Quiz] Using {len(selected_chunks)} content chunks for quiz generation")
 
-    # Build context string for LLM
     context_parts = []
     chunk_sources = []
     for i, chunk in enumerate(selected_chunks, 1):
@@ -302,15 +249,10 @@ def generate_quiz(subject_name: str, num_questions: int = 10) -> Dict:
 
     context_text = "\n\n".join(context_parts)
 
-    # Call LLM
-    prompt = _build_quiz_prompt(context_text, num_questions)
-
     logger.info("[Quiz] Calling LLM for quiz generation...")
-    response_text = _call_llm(prompt)
-
+    response_text = _call_llm(context_text, num_questions)
     logger.info(f"[Quiz] LLM response length: {len(response_text)}")
 
-    # Parse response
     raw_questions = _parse_quiz_response(response_text)
 
     if not raw_questions:
@@ -321,9 +263,9 @@ def generate_quiz(subject_name: str, num_questions: int = 10) -> Dict:
 
     logger.info(f"[Quiz] Parsed {len(raw_questions)} questions from LLM response")
 
-    # Build final structured output
     quiz_questions = []
     for i, q in enumerate(raw_questions[:num_questions], 1):
+        q = _shuffle_correct_answer(q)
         question_text = q.get("question", "")
         if not question_text:
             continue
@@ -332,7 +274,6 @@ def generate_quiz(subject_name: str, num_questions: int = 10) -> Dict:
         if correct not in ("A", "B", "C", "D"):
             correct = "A"
 
-        # Try to match source topic to our chunks
         source_topic = q.get("source_topic", "")
         matched_source = {"chapter_name": "", "subtopic_name": source_topic}
         for cs in chunk_sources:

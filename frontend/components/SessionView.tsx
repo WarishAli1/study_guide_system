@@ -91,14 +91,14 @@ function QuickStartView({ session }: { session: Session }) {
     ];
 
     return (
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0 bg-[#F8FAFF]">
             <div className="max-w-xl mx-auto px-6 py-12">
                 <div className="mb-10">
-                    <h1 className="text-xl font-semibold text-neutral-900 mb-1">
+                    <h1 className="text-xl font-semibold text-slate-900 mb-1">
                         {session.name}
                     </h1>
                     {session.description && (
-                        <p className="text-sm text-neutral-500">{session.description}</p>
+                        <p className="text-sm text-slate-500">{session.description}</p>
                     )}
                 </div>
 
@@ -111,48 +111,60 @@ function QuickStartView({ session }: { session: Session }) {
                                 <div className="flex flex-col items-center">
                                     <div className="relative z-10">
                                         {step.done ? (
-                                            <div className="w-8 h-8 rounded-full bg-neutral-900 flex items-center justify-center">
+                                            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-sm shadow-blue-200">
                                                 <CheckCircle className="w-4 h-4 text-white" />
                                             </div>
                                         ) : (
-                                            <div className="w-8 h-8 rounded-full border-2 border-neutral-300 bg-white flex items-center justify-center">
-                                                <Circle className="w-3 h-3 text-neutral-300" />
+                                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center">
+                                                <Circle className="w-3 h-3 text-slate-300" />
                                             </div>
                                         )}
                                     </div>
                                     {!isLast && (
                                         <div
-                                            className={`w-px flex-1 min-h-[48px] ${step.done ? "bg-neutral-900" : "bg-neutral-200"
-                                                }`}
+                                            className={`w-px flex-1 min-h-[48px] ${
+                                                step.done ? "bg-blue-300" : "bg-slate-200"
+                                            }`}
                                         />
                                     )}
                                 </div>
                                 <div className={`pb-8 flex-1 ${isLast ? "pb-0" : ""}`}>
                                     <div
                                         onClick={step.action}
-                                        className={`pt-1 rounded-lg px-3 py-2 -mx-3 -mt-1 transition-colors ${isClickable
-                                                ? "cursor-pointer hover:bg-neutral-50"
+                                        className={`pt-1 rounded-lg px-3 py-2 -mx-3 -mt-1 transition-colors ${
+                                            isClickable
+                                                ? "cursor-pointer hover:bg-blue-50 hover:border-blue-100"
                                                 : ""
-                                            }`}
+                                        }`}
                                     >
                                         <h3
-                                            className={`text-sm font-medium ${step.done
-                                                    ? "text-neutral-900"
+                                            className={`text-sm font-medium ${
+                                                step.done
+                                                    ? "text-slate-900"
                                                     : isClickable
-                                                        ? "text-neutral-700"
-                                                        : "text-neutral-400"
-                                                }`}
+                                                    ? "text-slate-700"
+                                                    : "text-slate-400"
+                                            }`}
                                         >
                                             {step.label}
+                                            {step.done && (
+                                                <span className="ml-2 text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full">
+                                                    Done
+                                                </span>
+                                            )}
                                         </h3>
                                         <p
-                                            className={`text-xs mt-0.5 ${isClickable
-                                                    ? "text-neutral-500"
-                                                    : "text-neutral-400"
-                                                }`}
+                                            className={`text-xs mt-0.5 ${
+                                                isClickable ? "text-slate-500" : "text-slate-400"
+                                            }`}
                                         >
                                             {step.description}
                                         </p>
+                                        {isClickable && !step.done && (
+                                            <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-medium text-amber-600">
+                                                Get started →
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -167,11 +179,11 @@ function QuickStartView({ session }: { session: Session }) {
 /* ─── Documents View ─────────────────────────────────────────────────── */
 function DocumentsView({ session }: { session: Session }) {
     return (
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0 bg-[#F8FAFF]">
             <div className="max-w-5xl mx-auto px-6 py-6">
                 <div className="mb-5">
-                    <h2 className="text-base font-semibold text-neutral-900">Documents</h2>
-                    <p className="text-sm text-neutral-500 mt-0.5">
+                    <h2 className="text-base font-semibold text-slate-900">Documents</h2>
+                    <p className="text-sm text-slate-500 mt-0.5">
                         Upload and manage your study materials
                     </p>
                 </div>

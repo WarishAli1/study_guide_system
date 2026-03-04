@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Sparkles } from "lucide-react";
 import { useSessionStore } from "@/lib/session-store";
 
 interface Props {
@@ -34,26 +34,28 @@ export default function CreateSessionModal({ open, onClose }: Props) {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative bg-white rounded-2xl shadow-xl shadow-blue-100/50 w-full max-w-md overflow-hidden border border-blue-100">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
-                    <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-neutral-700" />
-                        <h2 className="text-base font-semibold text-neutral-900">New Session</h2>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-blue-50 bg-blue-50/30">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+                            <Plus className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <h2 className="text-base font-semibold text-slate-900">New Session</h2>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-blue-100 transition-colors"
                     >
-                        <X className="w-4 h-4 text-neutral-500" />
+                        <X className="w-4 h-4 text-slate-400" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-                            Session Name <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                            Session Name <span className="text-red-400">*</span>
                         </label>
                         <input
                             ref={inputRef}
@@ -61,25 +63,28 @@ export default function CreateSessionModal({ open, onClose }: Props) {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="e.g., Data Structures Final Prep"
-                            className="w-full px-3 py-2 rounded-lg border border-neutral-300
-                         focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900
-                         outline-none transition-all text-sm"
+                            className="w-full px-3 py-2 rounded-lg border border-blue-200
+                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                         outline-none transition-all text-sm text-slate-900
+                         placeholder:text-slate-300 bg-white"
                             maxLength={60}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-                            Description <span className="text-neutral-400 font-normal">(optional)</span>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                            Description{" "}
+                            <span className="text-slate-400 font-normal">(optional)</span>
                         </label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Brief description of what this session is for..."
                             rows={2}
-                            className="w-full px-3 py-2 rounded-lg border border-neutral-300
-                         focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900
-                         outline-none transition-all text-sm resize-none"
+                            className="w-full px-3 py-2 rounded-lg border border-blue-200
+                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                         outline-none transition-all text-sm resize-none text-slate-900
+                         placeholder:text-slate-300 bg-white"
                             maxLength={200}
                         />
                     </div>
@@ -88,19 +93,21 @@ export default function CreateSessionModal({ open, onClose }: Props) {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 rounded-lg border border-neutral-300
-                         text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                            className="flex-1 px-4 py-2 rounded-lg border border-blue-200
+                         text-sm font-medium text-slate-600 hover:bg-blue-50 transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={!name.trim()}
-                            className="flex-1 px-4 py-2 rounded-lg bg-neutral-900 text-white
-                         text-sm font-medium hover:bg-neutral-800 transition-colors
-                         disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white
+                         text-sm font-medium hover:bg-blue-700 transition-colors
+                         disabled:opacity-40 disabled:cursor-not-allowed
+                         shadow-sm shadow-blue-200 flex items-center justify-center gap-2"
                         >
-                            Create
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Create Session
                         </button>
                     </div>
                 </form>

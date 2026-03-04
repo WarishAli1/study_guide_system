@@ -13,6 +13,7 @@ import {
     Rocket,
     ArrowLeft,
     CircleHelp,
+    BookOpen,
 } from "lucide-react";
 import { useSessionStore } from "@/lib/session-store";
 import { useAuth } from "@/lib/auth";
@@ -83,9 +84,10 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
 
             <aside
                 className={`
-          fixed top-0 left-0 z-50 h-full bg-[#ebebeb]
-          text-neutral-600 flex flex-col transition-all duration-300 ease-in-out
-          lg:relative lg:z-auto lg:bg-neutral-200/25
+          fixed top-0 left-0 z-50 h-full
+          bg-white border-r border-blue-100
+          text-slate-600 flex flex-col transition-all duration-300 ease-in-out
+          lg:relative lg:z-auto
           ${sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0"}
         `}
             >
@@ -94,41 +96,44 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                         } transition-opacity`}
                 >
                     {/* Logo */}
-                    <div className="flex items-center justify-between px-4 py-4 shrink-0">
+                    <div className="flex items-center justify-between px-4 py-4 border-b border-blue-50 shrink-0">
                         <div
                             className="flex items-center gap-2 cursor-pointer"
                             onClick={() => setActiveSession(null)}
                         >
-                            <span className="text-base font-semibold text-neutral-900 tracking-tight">
+                            <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center shrink-0">
+                                <BookOpen className="w-4 h-4 text-white" />
+                            </div>
+                            <span className="text-base font-bold text-slate-900 tracking-tight">
                                 ExamGuide
                             </span>
                         </div>
                         <button
                             onClick={() => setSidebarOpen(false)}
-                            className="p-1.5 rounded-lg hover:bg-neutral-200 transition-colors lg:hidden"
+                            className="p-1.5 rounded-lg hover:bg-blue-50 transition-colors lg:hidden"
                         >
-                            <X className="w-4 h-4 text-neutral-500" />
+                            <X className="w-4 h-4 text-slate-400" />
                         </button>
                     </div>
 
                     {activeSession ? (
                         <>
                             {/* Back to dashboard + New Session */}
-                            <div className="px-3 pb-2 shrink-0">
+                            <div className="px-3 pt-3 pb-2 shrink-0">
                                 <div className="flex items-center gap-1.5">
                                     <button
                                         onClick={() => setActiveSession(null)}
                                         className="flex items-center gap-1.5 px-2 py-1.5 rounded-md
-                      text-xs text-neutral-400 hover:text-neutral-700
-                      hover:bg-neutral-200 transition-colors flex-1 min-w-0"
+                      text-xs text-slate-400 hover:text-blue-600
+                      hover:bg-blue-50 transition-colors flex-1 min-w-0"
                                     >
                                         <ArrowLeft className="w-3 h-3 shrink-0" />
                                         <span className="truncate">Dashboard</span>
                                     </button>
                                     <button
                                         onClick={onCreateSession}
-                                        className="p-1.5 rounded-md hover:bg-neutral-200
-                      text-neutral-900 hover:text-neutral-700 transition-colors shrink-0"
+                                        className="p-1.5 rounded-md hover:bg-blue-50
+                      text-slate-500 hover:text-blue-600 transition-colors shrink-0"
                                         title="New Session"
                                     >
                                         <Plus className="w-3.5 h-3.5" />
@@ -137,17 +142,17 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                             </div>
 
                             {/* Session header */}
-                            <div className="px-4 pb-3 border-b border-neutral-200/50 shrink-0">
-                                <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1">
+                            <div className="px-4 pb-3 border-b border-blue-50 shrink-0">
+                                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-1">
                                     Session
                                 </p>
-                                <p className="text-sm font-medium text-neutral-900 truncate">
+                                <p className="text-sm font-semibold text-slate-900 truncate">
                                     {activeSession.name}
                                 </p>
                             </div>
 
                             {/* Navigation */}
-                            <nav className="px-2 py-2 space-y-0.5 border-b border-neutral-200/50 shrink-0">
+                            <nav className="px-2 py-2 space-y-0.5 border-b border-blue-50 shrink-0">
                                 {navItems.map((item) => {
                                     const isActive = activeView === item.id;
                                     return (
@@ -158,13 +163,16 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                         w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md
                         text-sm transition-colors
                         ${isActive
-                                                    ? "bg-neutral-200/80 text-neutral-900 font-medium"
-                                                    : "text-neutral-900 hover:bg-neutral-200 hover:text-neutral-900"
+                                                    ? "bg-blue-50 text-blue-700 font-medium"
+                                                    : "text-slate-600 hover:bg-blue-50/60 hover:text-slate-900"
                                                 }
                       `}
                                         >
-                                            <item.icon className="w-3.5 h-3.5" />
+                                            <item.icon className={`w-3.5 h-3.5 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
                                             {item.label}
+                                            {isActive && (
+                                                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                            )}
                                         </button>
                                     );
                                 })}
@@ -173,7 +181,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                             {/* Chat conversations list */}
                             <div className="flex-1 overflow-y-auto min-h-0">
                                 <div className="px-3 pt-3 pb-1 flex items-center justify-between">
-                                    <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium px-1">
+                                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium px-1">
                                         Chats
                                     </p>
                                     <button
@@ -181,8 +189,8 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                             setActiveConversation(null);
                                             setActiveView("chat");
                                         }}
-                                        className="p-1 rounded-md hover:bg-neutral-200 text-neutral-900
-                      hover:text-neutral-700 transition-colors"
+                                        className="p-1 rounded-md hover:bg-blue-50 text-slate-400
+                      hover:text-blue-600 transition-colors"
                                         title="New Chat"
                                     >
                                         <Plus className="w-3.5 h-3.5" />
@@ -192,8 +200,10 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                 <div className="px-2 pb-3 space-y-0.5">
                                     {activeSession.conversations.length === 0 ? (
                                         <div className="text-center py-6 px-4">
-                                            <MessageSquare className="w-5 h-5 mx-auto text-neutral-300 mb-1.5" />
-                                            <p className="text-[11px] text-neutral-400">
+                                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mx-auto mb-2">
+                                                <MessageSquare className="w-4 h-4 text-blue-300" />
+                                            </div>
+                                            <p className="text-[11px] text-slate-400">
                                                 No chats yet
                                             </p>
                                         </div>
@@ -214,12 +224,12 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                             group flex items-center gap-2 px-2.5 py-2 rounded-lg
                             transition-colors text-sm cursor-pointer
                             ${isActive
-                                                            ? "bg-neutral-200/80 text-neutral-900"
-                                                            : "hover:bg-neutral-200 text-neutral-900"
+                                                            ? "bg-blue-50 text-blue-700"
+                                                            : "hover:bg-blue-50/60 text-slate-600 hover:text-slate-900"
                                                         }
                           `}
                                                 >
-                                                    <Send className="w-3 h-3 shrink-0" />
+                                                    <Send className={`w-3 h-3 shrink-0 ${isActive ? "text-blue-500" : "text-slate-300"}`} />
                                                     <div className="flex-1 min-w-0">
                                                         <span className="block truncate text-xs">
                                                             {conv.title}
@@ -235,14 +245,14 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                                             }
                                                             className={`p-1 rounded transition-colors shrink-0 ${confirmDelete === conv.id
                                                                     ? "bg-red-100 text-red-500"
-                                                                    : "hover:bg-neutral-200 text-neutral-400"
+                                                                    : "hover:bg-blue-100 text-slate-300 hover:text-slate-500"
                                                                 }`}
                                                         >
                                                             <Trash2 className="w-3 h-3" />
                                                         </button>
                                                     ) : (
                                                         msgCount > 0 && (
-                                                            <span className="text-[10px] text-neutral-400 shrink-0">
+                                                            <span className="text-[10px] text-slate-300 shrink-0">
                                                                 {msgCount}
                                                             </span>
                                                         )
@@ -261,9 +271,9 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                 <button
                                     onClick={onCreateSession}
                                     className="w-full flex items-center gap-2 px-3 py-2 rounded-lg
-                    border border-neutral-300 hover:border-neutral-400
-                    text-neutral-900 text-sm font-medium
-                    hover:bg-neutral-200 transition-colors"
+                    bg-blue-600 hover:bg-blue-700
+                    text-white text-sm font-medium
+                    transition-colors shadow-sm shadow-blue-200"
                                 >
                                     <Plus className="w-4 h-4" />
                                     New Session
@@ -272,7 +282,7 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
 
                             {sessions.length > 0 && (
                                 <div className="flex-1 overflow-y-auto min-h-0 space-y-0.5">
-                                    <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium px-2 mb-1">
+                                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium px-2 mb-1">
                                         Sessions
                                     </p>
                                     {sessions.map((session) => {
@@ -282,17 +292,19 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                                                 key={session.id}
                                                 onClick={() => setActiveSession(session.id)}
                                                 className="flex items-center gap-2 px-2.5 py-2 rounded-lg
-                          hover:bg-neutral-200 text-neutral-900
-                          transition-colors cursor-pointer"
+                          hover:bg-blue-50 text-slate-700
+                          transition-colors cursor-pointer group"
                                             >
-                                                <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                                                <div className="w-6 h-6 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                                                    <MessageSquare className="w-3 h-3 text-blue-400" />
+                                                </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <span className="block truncate text-sm">
+                                                    <span className="block truncate text-sm text-slate-700 group-hover:text-slate-900">
                                                         {session.name}
                                                     </span>
                                                 </div>
                                                 {chatCount > 0 && (
-                                                    <span className="text-[10px] text-neutral-400 shrink-0">
+                                                    <span className="text-[10px] text-slate-300 shrink-0 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-md">
                                                         {chatCount}
                                                     </span>
                                                 )}
@@ -304,8 +316,10 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
 
                             {sessions.length === 0 && (
                                 <div className="flex-1 flex flex-col items-center justify-center px-3">
-                                    <MessageSquare className="w-8 h-8 text-neutral-200 mb-3" />
-                                    <p className="text-xs text-neutral-400 text-center">
+                                    <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-3">
+                                        <MessageSquare className="w-6 h-6 text-blue-300" />
+                                    </div>
+                                    <p className="text-xs text-slate-400 text-center">
                                         Create a session to get started
                                     </p>
                                 </div>
@@ -314,28 +328,34 @@ export default function Sidebar({ onCreateSession }: SidebarProps) {
                     )}
 
                     {/* User Footer */}
-                    <div className="border-t border-neutral-200 px-3 py-3 shrink-0">
+                    <div className="border-t border-blue-50 bg-blue-50/30 px-3 py-3 shrink-0">
                         <div className="flex items-center gap-3 px-2">
-                            {user?.picture && (
+                            {user?.picture ? (
                                 <img
                                     src={user.picture}
                                     alt={user.name || ""}
-                                    className="w-7 h-7 rounded-full shrink-0"
+                                    className="w-7 h-7 rounded-full shrink-0 ring-2 ring-blue-100"
                                     referrerPolicy="no-referrer"
                                 />
+                            ) : (
+                                <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                                    <span className="text-xs font-medium text-blue-600">
+                                        {user?.name?.[0]?.toUpperCase()}
+                                    </span>
+                                </div>
                             )}
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-neutral-900 truncate">
+                                <p className="text-xs font-medium text-slate-800 truncate">
                                     {user?.name}
                                 </p>
-                                <p className="text-[10px] text-neutral-400 truncate">
+                                <p className="text-[10px] text-slate-400 truncate">
                                     {user?.email}
                                 </p>
                             </div>
                             <button
                                 onClick={handleLogout}
                                 title="Sign out"
-                                className="p-1.5 rounded-lg hover:bg-neutral-200 text-neutral-900 hover:text-neutral-600 transition-colors"
+                                className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                             >
                                 <LogOut className="w-3.5 h-3.5" />
                             </button>
