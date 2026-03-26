@@ -111,14 +111,12 @@ def _compute_importance_score(
 ) -> float:
     """
     Score 0-10 using relative comparison across chapters (not subject totals).
-    - credit_hours   vs max_credits in this subject   → 40%
-    - marks_dist     vs max_marks in this subject      → 40%
-    - repeat ratio   (repeat / total questions)        → 20%
+    - credit_hours   vs max_credits in this subject   → 50%
+    - marks_dist     vs max_marks in this subject      → 50%
     """
     ch_score = ((credit_hours or 0) / max_credits * 10) if max_credits else 0
     mk_score = ((marks_dist or 0) / max_marks * 10) if max_marks else 0
-    rq_score = (repeat_q_count / total_q_count * 10) if total_q_count else 0
-    return round(min(0.40 * ch_score + 0.40 * mk_score + 0.20 * rq_score, 10), 2)
+    return round(min(0.50 * ch_score + 0.50 * mk_score, 10), 2)
 
 
 def _study_priority(score: float) -> str:

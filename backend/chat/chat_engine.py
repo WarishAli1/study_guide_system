@@ -37,7 +37,13 @@ def chat(
     retrieval = retrieve(query, subject_name, top_k=top_k)
     chunks = retrieval["chunks"]
     related_questions = retrieval["related_questions"]
-
+    if not chunks:
+        return {
+            "answer": "The provided context does not contain information about this topic. It may not be covered in your course notes.",
+            "sources": [],
+            "related_questions": [],
+            "metadata": retrieval.get("metadata", {}),
+        }
     syllabus_data = load_syllabus_data(subject_name)
     context, source_list = build_context(
         chunks=chunks,

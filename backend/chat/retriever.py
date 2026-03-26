@@ -273,7 +273,6 @@ def retrieve(
 
     reranked = _semantic_rerank(query, candidates, top_k=top_k)
     logger.info(f"[Retriever] Stage 2: {len(reranked)} final chunks")
-
     related_questions = _find_related_questions(query, questions, top_k=3)
 
     chunks = []
