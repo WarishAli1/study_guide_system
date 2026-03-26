@@ -32,15 +32,19 @@ def _load_json(path: str):
 
 
 def _load_chapter_data(subject_name: str) -> List[Dict]:
+    """Load ALL chapter JSON files for the subject."""
     chapter_dir = os.path.join(Config.CHAPTER_JSON_DIR, subject_name)
-    files = _find_json_files(chapter_dir)
+    if not os.path.isdir(chapter_dir):
+        return []
     all_chapters = []
-    for f in files:
-        data = _load_json(f)
-        if isinstance(data, list):
-            all_chapters.extend(data)
-        elif isinstance(data, dict):
-            all_chapters.append(data)
+    for f in sorted(os.listdir(chapter_dir)):
+        if f.endswith(".json"):
+            path = os.path.join(chapter_dir, f)
+            data = _load_json(path)
+            if isinstance(data, list):
+                all_chapters.extend(data)
+            elif isinstance(data, dict):
+                all_chapters.append(data)
     return all_chapters
 
 
@@ -55,15 +59,19 @@ def _load_dataset(subject_name: str) -> List[Dict]:
 
 
 def _load_question_data(subject_name: str) -> List[Dict]:
+    """Load ALL question JSON files for the subject."""
     question_dir = os.path.join(Config.QUESTION_JSON_DIR, subject_name)
-    files = _find_json_files(question_dir)
+    if not os.path.isdir(question_dir):
+        return []
     all_questions = []
-    for f in files:
-        data = _load_json(f)
-        if isinstance(data, dict):
-            all_questions.extend(data.get("questions", []))
-        elif isinstance(data, list):
-            all_questions.extend(data)
+    for f in sorted(os.listdir(question_dir)):
+        if f.endswith(".json"):
+            path = os.path.join(question_dir, f)
+            data = _load_json(path)
+            if isinstance(data, dict):
+                all_questions.extend(data.get("questions", []))
+            elif isinstance(data, list):
+                all_questions.extend(data)
     return all_questions
 
 
