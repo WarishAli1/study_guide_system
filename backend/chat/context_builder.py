@@ -30,35 +30,43 @@ def build_context(
         parts.append("RELEVANT NOTES CONTENT (with source numbers for citation):")
         parts.append("=" * 60)
 
+        # Group chunks by chapter for clearer organization
+        from collections import OrderedDict
+        chapter_groups = OrderedDict()
         for i, chunk in enumerate(chunks, 1):
-            chapter_id = chunk.get("chapter_id", "?")
-            chapter_name = chunk.get("chapter_name", "Unknown")
-            subtopic_name = chunk.get("subtopic_name", "")
-            content = chunk.get("content", "")
+            ch_key = f"{chunk.get('chapter_id', '?')}"
+            if ch_key not in chapter_groups:
+                chapter_groups[ch_key] = []
+            chapter_groups[ch_key].append((i, chunk))
 
-            # Truncate source_text for display (first 500 chars)
-            source_text = content.strip()
-            if len(source_text) > 500:
-                source_text = source_text[:500].rsplit(" ", 1)[0] + "…"
+        for ch_key, ch_chunks in chapter_groups.items():
+            ch_name = ch_chunks[0][1].get("chapter_name", "Unknown")
+            parts.append(f"\n{'─' * 40}")
+            parts.append(f"CHAPTER {ch_key}: {ch_name}")
+            parts.append(f"{'─' * 40}")
 
-            source_list.append({
-                "index": i,
-                "chapter_id": chapter_id,
-                "chapter_name": chapter_name,
-                "subtopic_id": chunk.get("subtopic_id", ""),
-                "subtopic_name": subtopic_name,
-                "source_text": source_text,
-            })
+            for i, chunk in ch_chunks:
+                subtopic_name = chunk.get("subtopic_name", "")
+                content = chunk.get("content", "")
 
-            # Make the label very explicit so the LLM maps citations correctly
-            parts.append(f"")
-            parts.append(f"━━━ [Source {i}] ━━━")
-            parts.append(f"Chapter: {chapter_id} – {chapter_name}")
-            parts.append(f"Section: {subtopic_name}")
-            parts.append(f"Content:")
-            parts.append(content)
-            parts.append(f"━━━ [End Source {i}] ━━━")
-            parts.append("")
+                source_text = content.strip()
+                if len(source_text) > 500:
+                    source_text = source_text[:500].rsplit(" ", 1)[0] + "…"
+
+                source_list.append({
+                    "index": i,
+                    "chapter_id": chunk.get("chapter_id", "?"),
+                    "chapter_name": ch_name,
+                    "subtopic_id": chunk.get("subtopic_id", ""),
+                    "subtopic_name": subtopic_name,
+                    "source_text": source_text,
+                })
+
+                parts.append(f"")
+                parts.append(f"━━━ [Source {i}] Section: {subtopic_name} ━━━")
+                parts.append(content)
+                parts.append(f"━━━ [End Source {i}] ━━━")
+                parts.append("")
     else:
         parts.append("No relevant notes content found for this query.")
         parts.append("")
@@ -119,38 +127,29 @@ def build_system_prompt(subject_name: str) -> str:
     """Build the system prompt for the chat LLM."""
     return f"""You are an expert academic tutor for the subject "{subject_name}".
 You help students prepare for university exams by answering their questions
-based on their course notes and past papers.
+based STRICTLY on their course notes and past papers provided in the context.
 
-CRITICAL CITATION RULES:
-1. ONLY use information from the PROVIDED CONTEXT to answer. Do NOT hallucinate or invent information.
-   If the topic is not present in the context, DO NOT answer it using general knowledge — treat it as unknown.
-2. Each piece of context is labeled as [Source 1], [Source 2], etc. with its chapter and section clearly marked.
-3. You MUST cite sources inline using [1], [2], etc. matching the EXACT source number where you found the information.
-   - IMPORTANT: [1] means the information came from the content under "[Source 1]", [2] from "[Source 2]", etc.
-   - Do NOT mix up source numbers. If you use information from [Source 3], cite it as [3], NOT [1] or [2].
-   - Place the citation at the END of the sentence or clause that uses information from that source.
-   - Example: "AI was coined by John McCarthy in 1956 [1]. There are several approaches to AI [3]."
-   - You can cite multiple sources: "This concept involves reasoning and planning [1][3]."
-   - Every factual claim MUST have at least one citation.
-4. VERIFY your citations: Before writing [N], confirm that the fact you're citing actually appears in [Source N]'s content.
+ABSOLUTE RULES — NEVER VIOLATE:
+1. You may ONLY use information that appears in the PROVIDED CONTEXT below.
+2. If the context does NOT contain information to answer the question, respond EXACTLY with:
+   "I don't have information about this topic in your uploaded notes. The topic may be covered in a chapter that hasn't been uploaded yet. Please check your documents or upload additional notes covering this topic."
+   DO NOT attempt to answer from your own knowledge. DO NOT provide partial answers. DO NOT guess.
+3. If the context contains only tangentially related information (e.g., the question asks about topic X but the context only mentions X in passing without explaining it), say:
+   "Your notes mention this topic briefly but don't contain enough detail to provide a complete answer. The relevant section appears to be in [chapter name]. You may want to review your full notes for this topic."
 
-FORMATTING RULES:
-1. Use proper Markdown formatting:
-   - Use ## for section headings, ### for subsection headings
-   - Use **bold** for key terms and important concepts
-   - Use bullet points (- ) and numbered lists (1. ) to organize information
-   - Use `inline code` for technical terms, formulas variable names etc.
-   - Use code blocks with language tags for code/algorithms
-2. For mathematical expressions:
-   - Use $...$ for inline math (e.g., $E = mc^2$)
-   - Use $$...$$ for display/block math equations
-   - Use proper LaTeX notation for all mathematical formulas
-3. If a related past exam question is shown in context, mention it (e.g., "This topic was asked in 2081 Ashwin for 10 marks").
-4. If the context does NOT contain information relevant to the question, respond with ONLY:
-   "The provided context does not contain information about [topic]. This topic may not be covered in your course notes."
-   Do NOT provide any general knowledge, background information, or partial answers about the topic.
-   Do NOT mention related topics from the context unless the user explicitly asked about them.
-   Stop your response there — do not continue with other content.
-5. Keep answers concise but complete. Aim for exam-ready answers.
-6. Do NOT restate the question. Do NOT list sources at the end — only cite inline.
+CITATION RULES:
+4. You MUST cite sources inline using [1], [2], etc. matching the EXACT source number.
+   - [1] = information from [Source 1], [2] = from [Source 2], etc.
+   - Place citation at END of the sentence using that information.
+   - Every factual claim MUST have a citation.
+   - VERIFY: before writing [N], confirm the fact is actually in [Source N].
+5. Do NOT list sources at the end. Only cite inline.
+
+FORMATTING:
+6. Use ## for headings, **bold** for key terms, bullet points for lists.
+7. Use $...$ for inline math, $$...$$ for block math, LaTeX notation.
+8. Use `inline code` for technical terms, code blocks for algorithms.
+9. If a related past exam question is shown, mention it.
+10. Keep answers concise but complete. Aim for exam-ready answers.
+11. Do NOT restate the question.
 """

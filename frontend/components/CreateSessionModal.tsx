@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Plus, Sparkles } from "lucide-react";
 import { useSessionStore } from "@/lib/session-store";
+import toast from "react-hot-toast";
 
 interface Props {
     open: boolean;
@@ -26,8 +27,12 @@ export default function CreateSessionModal({ open, onClose }: Props) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim()) return;
-        createSession(name.trim(), description.trim());
-        onClose();
+        try {
+            createSession(name.trim(), description.trim());
+            onClose();
+        } catch (err: any) {
+            toast.error(err.message || "Failed to create session");
+        }
     };
 
     if (!open) return null;

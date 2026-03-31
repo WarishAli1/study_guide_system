@@ -201,6 +201,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     const createSession = useCallback(
         (name: string, description: string): Session => {
+            // Check for duplicate name
+            const existing = sessions.find(
+                (s) => s.name.toLowerCase().trim() === name.toLowerCase().trim()
+            );
+            if (existing) {
+                throw new Error(`A session named "${name}" already exists.`);
+            }
+
             const now = new Date().toISOString();
             const session: Session = {
                 id: uuidv4(),
@@ -219,7 +227,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             setActiveView("quickstart");
             return session;
         },
-        []
+        [sessions]
     );
 
     const updateSession = useCallback(

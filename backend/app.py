@@ -7,6 +7,7 @@ from report.api import router as report_router
 from data.dataset_api import router as dataset_router
 from chat.api import router as chat_router
 from quiz.api import router as quiz_router
+from analysis.api import router as analysis_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,6 +37,7 @@ app.include_router(report_router, prefix="/api", tags=["Report"])
 app.include_router(dataset_router, prefix="/api", tags=["Dataset"])
 app.include_router(chat_router, prefix="/api", tags=["Chat"])
 app.include_router(quiz_router, prefix="/api", tags=["Quiz"])
+app.include_router(analysis_router, prefix="/api", tags=["Analysis"])
 
 
 @app.get("/")

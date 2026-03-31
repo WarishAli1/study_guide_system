@@ -18,6 +18,7 @@ export default function ChatView({ session }: Props) {
         activeConversationId, createConversation, addMessageToConversation,
         setActiveConversation, getActiveConversation,
         pendingChatPrompt, setPendingChatPrompt,
+        setActiveView,
     } = useSessionStore();
 
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -27,12 +28,15 @@ export default function ChatView({ session }: Props) {
 
     const activeConv = getActiveConversation();
     const messages = activeConv?.messages || [];
-    const hasNotes = session.documents.some((d) => d.type === "notes" && d.status === "success");
+    const hasNotes = session.documents.some(
+        (d) => d.type === "notes" && d.status === "success"
+    );
 
     const scrollToBottom = useCallback(() => {
         requestAnimationFrame(() => {
             if (messagesContainerRef.current)
-                messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+                messagesContainerRef.current.scrollTop =
+                    messagesContainerRef.current.scrollHeight;
         });
     }, []);
 
@@ -47,13 +51,16 @@ export default function ChatView({ session }: Props) {
                 textareaRef.current?.focus();
                 if (textareaRef.current) {
                     textareaRef.current.style.height = "auto";
-                    textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + "px";
+                    textareaRef.current.style.height =
+                        Math.min(textareaRef.current.scrollHeight, 120) + "px";
                 }
             }, 100);
         }
     }, [pendingChatPrompt, setPendingChatPrompt]);
 
-    useEffect(() => { return () => { pendingHandled.current = false; }; }, []);
+    useEffect(() => {
+        return () => { pendingHandled.current = false; };
+    }, []);
 
     const handleNewChat = () => {
         setActiveConversation(null);
@@ -62,48 +69,85 @@ export default function ChatView({ session }: Props) {
         setTimeout(() => textareaRef.current?.focus(), 100);
     };
 
-    const sendMessage = useCallback(async (text: string) => {
-        const trimmed = text.trim();
-        if (!trimmed || isLoading) return;
+    const sendMessage = useCallback(
+        async (text: string) => {
+            const trimmed = text.trim();
+            if (!trimmed || isLoading) return;
 
-        let convId = activeConversationId;
-        if (!convId) {
-            const newConv = createConversation(session.id);
-            convId = newConv.id;
-        }
+            let convId = activeConversationId;
+            if (!convId) {
+                const newConv = createConversation(session.id);
+                convId = newConv.id;
+            }
 
-        const userMsg: ChatMessage = {
-            id: uuidv4(), role: "user", content: trimmed,
-            timestamp: new Date().toISOString(),
-        };
-        addMessageToConversation(session.id, convId, userMsg);
-        setMessage("");
-        if (textareaRef.current) textareaRef.current.style.height = "auto";
-
-        setIsLoading(true);
-        try {
-            const currentConv = session.conversations.find((c) => c.id === convId);
-            const history = (currentConv?.messages || []).slice(-10).map((m) => ({ role: m.role, content: m.content }));
-            const res = await chatAPI.send({ message: trimmed, subject: session.name, history });
-            const data: ChatResponseData = res.data;
-            const assistantMsg: ChatMessage = {
-                id: uuidv4(), role: "assistant", content: data.answer,
+            const userMsg: ChatMessage = {
+                id: uuidv4(),
+                role: "user",
+                content: trimmed,
                 timestamp: new Date().toISOString(),
-                sources: data.sources, relatedQuestions: data.related_questions,
             };
-            addMessageToConversation(session.id, convId, assistantMsg);
-        } catch (err: any) {
-            const errorText = err?.response?.data?.detail || "Sorry, I couldn't generate a response.";
-            addMessageToConversation(session.id, convId, {
-                id: uuidv4(), role: "assistant",
-                content: `⚠️ ${typeof errorText === "string" ? errorText : "An error occurred."}`,
-                timestamp: new Date().toISOString(),
-            });
-        } finally { setIsLoading(false); }
-    }, [isLoading, activeConversationId, session.id, session.name, session.conversations, createConversation, addMessageToConversation]);
+
+            addMessageToConversation(session.id, convId, userMsg);
+            setMessage("");
+            if (textareaRef.current) textareaRef.current.style.height = "auto";
+            setIsLoading(true);
+
+            try {
+                const currentConv = session.conversations.find((c) => c.id === convId);
+                const history = (currentConv?.messages || [])
+                    .slice(-10)
+                    .map((m) => ({ role: m.role, content: m.content }));
+
+                const res = await chatAPI.send({
+                    message: trimmed,
+                    subject: session.name,
+                    history,
+                });
+
+                const data: ChatResponseData = res.data;
+
+                const assistantMsg: ChatMessage = {
+                    id: uuidv4(),
+                    role: "assistant",
+                    content: data.answer,
+                    timestamp: new Date().toISOString(),
+                    sources: data.sources,
+                    relatedQuestions: data.related_questions,
+                    inlineQuestion: data.inline_question ?? undefined,
+                };
+
+                addMessageToConversation(session.id, convId, assistantMsg);
+            } catch (err: any) {
+                const errorText =
+                    err?.response?.data?.detail ||
+                    "Sorry, I couldn't generate a response.";
+                addMessageToConversation(session.id, convId, {
+                    id: uuidv4(),
+                    role: "assistant",
+                    content: `⚠️ ${typeof errorText === "string" ? errorText : "An error occurred."
+                        }`,
+                    timestamp: new Date().toISOString(),
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [
+            isLoading,
+            activeConversationId,
+            session.id,
+            session.name,
+            session.conversations,
+            createConversation,
+            addMessageToConversation,
+        ]
+    );
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(message); }
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage(message);
+        }
     };
 
     return (
@@ -113,11 +157,13 @@ export default function ChatView({ session }: Props) {
                 {messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full min-h-[300px]">
                         <div className="text-center max-w-md px-6">
-                            <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-200">
+                            <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-4">
                                 <Sparkles className="w-7 h-7 text-white" />
                             </div>
                             <h3 className="text-base font-semibold text-slate-800 mb-2">
-                                {activeConv ? "Continue your conversation" : "Ask your documents anything"}
+                                {activeConv
+                                    ? "Continue your conversation"
+                                    : "Ask your documents anything"}
                             </h3>
                             <p className="text-sm text-slate-400 leading-relaxed">
                                 {hasNotes
@@ -134,13 +180,19 @@ export default function ChatView({ session }: Props) {
                 ) : (
                     <div className="max-w-3xl mx-auto px-6 py-6 space-y-5">
                         {messages.map((msg) => (
-                            <MessageBubble key={msg.id} message={msg} />
+                            <MessageBubble
+                                key={msg.id}
+                                message={msg}
+                                onNavigateToQuiz={() => setActiveView("quiz")}
+                            />
                         ))}
                         {isLoading && (
                             <div className="py-2">
                                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 w-fit">
                                     <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
-                                    <span className="text-sm text-blue-600">Searching notes & generating answer…</span>
+                                    <span className="text-sm text-blue-600">
+                                        Searching notes & generating answer…
+                                    </span>
                                 </div>
                             </div>
                         )}
@@ -152,32 +204,42 @@ export default function ChatView({ session }: Props) {
             {/* Input */}
             <div className="shrink-0 bg-white border-t border-blue-50 px-4 pb-4 pt-3">
                 <div className="max-w-3xl mx-auto">
-                    <div className="flex items-end gap-2 bg-white border border-blue-100 rounded-xl px-3 py-2 focus-within:border-blue-300 focus-within:shadow-sm focus-within:shadow-blue-100 transition-all">
+                    <div className="flex items-end gap-2 bg-white border border-blue-100 rounded-xl px-3 py-2 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-50 transition-all">
                         <textarea
                             ref={textareaRef}
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder={hasNotes ? "Ask about your documents…" : "Upload notes for grounded answers…"}
+                            placeholder={
+                                hasNotes
+                                    ? "Ask about your documents…"
+                                    : "Upload notes for grounded answers…"
+                            }
                             rows={1}
                             disabled={isLoading}
-                            className="flex-1 bg-transparent outline-none text-sm resize-none py-1 placeholder:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed text-slate-800"
+                            className="flex-1 bg-transparent outline-none text-sm resize-none py-1 placeholder:text-slate-300 text-slate-800 max-h-[120px]"
                             onInput={(e) => {
                                 const target = e.target as HTMLTextAreaElement;
                                 target.style.height = "auto";
-                                target.style.height = Math.min(target.scrollHeight, 120) + "px";
+                                target.style.height =
+                                    Math.min(target.scrollHeight, 120) + "px";
                             }}
                         />
                         <button
                             onClick={() => sendMessage(message)}
                             disabled={!message.trim() || isLoading}
-                            className="p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 mb-0.5 shadow-sm shadow-blue-200"
+                            className="p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
                         >
-                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            {isLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Send className="w-4 h-4" />
+                            )}
                         </button>
                     </div>
                     <p className="text-[10px] text-slate-300 mt-1.5 text-center">
-                        Press <kbd className="font-mono">Enter</kbd> to send · <kbd className="font-mono">Shift+Enter</kbd> for new line
+                        Press <kbd className="font-mono">Enter</kbd> to send ·{" "}
+                        <kbd className="font-mono">Shift+Enter</kbd> for new line
                     </p>
                 </div>
             </div>

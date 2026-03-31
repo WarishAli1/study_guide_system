@@ -1,13 +1,10 @@
 import logging
 from typing import Optional, List, Union
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-
 from chat.chat_engine import chat
 
 logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
 
@@ -41,10 +38,32 @@ class RelatedQuestion(BaseModel):
     marks: List[int]
 
 
+class InlineQuizOption(BaseModel):
+    A: str
+    B: str
+    C: str
+    D: str
+
+
+class InlineQuizSource(BaseModel):
+    chapter_name: str
+    subtopic_name: str
+
+
+class InlineQuizQuestion(BaseModel):
+    id: int
+    question: str
+    options: InlineQuizOption
+    correct: str
+    explanation: str
+    source: InlineQuizSource
+
+
 class ChatResponse(BaseModel):
     answer: str
     sources: List[SourceInfo]
     related_questions: List[RelatedQuestion]
+    inline_question: Optional[InlineQuizQuestion] = None
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -54,7 +73,6 @@ async def chat_endpoint(req: ChatRequest):
     """
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
-
     if not req.subject.strip():
         raise HTTPException(status_code=400, detail="Subject is required.")
 
@@ -75,8 +93,25 @@ async def chat_endpoint(req: ChatRequest):
             detail=f"Failed to generate response: {str(e)}",
         )
 
+    inline_question = None
+    if result.get("inline_question"):
+        try:
+            iq = result["inline_question"]
+            inline_question = InlineQuizQuestion(
+                id=iq["id"],
+                question=iq["question"],
+                options=InlineQuizOption(**iq["options"]),
+                correct=iq["correct"],
+                explanation=iq["explanation"],
+                source=InlineQuizSource(**iq["source"]),
+            )
+        except Exception as e:
+            logger.warning(f"[Chat] Failed to parse inline_question: {e}")
+            inline_question = None
+
     return ChatResponse(
         answer=result["answer"],
         sources=[SourceInfo(**s) for s in result["sources"]],
         related_questions=[RelatedQuestion(**q) for q in result["related_questions"]],
+        inline_question=inline_question,
     )

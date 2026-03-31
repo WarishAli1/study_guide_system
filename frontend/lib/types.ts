@@ -53,6 +53,27 @@ export interface ChatRelatedQuestion {
     marks: number[];
 }
 
+export interface InlineQuizOption {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+}
+
+export interface InlineQuizSource {
+    chapter_name: string;
+    subtopic_name: string;
+}
+
+export interface InlineQuizQuestion {
+    id: number;
+    question: string;
+    options: InlineQuizOption;
+    correct: string;
+    explanation: string;
+    source: InlineQuizSource;
+}
+
 export interface ChatMessage {
     id: string;
     role: "user" | "assistant";
@@ -60,6 +81,7 @@ export interface ChatMessage {
     timestamp: string;
     sources?: ChatSource[];
     relatedQuestions?: ChatRelatedQuestion[];
+    inlineQuestion?: InlineQuizQuestion;
 }
 
 export interface ChatConversation {
@@ -69,8 +91,6 @@ export interface ChatConversation {
     updatedAt: string;
     messages: ChatMessage[];
 }
-
-// ── Study Guide types ──
 
 export interface GuideQuestion {
     question: string;

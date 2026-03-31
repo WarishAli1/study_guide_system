@@ -70,10 +70,32 @@ export interface ChatRelatedQuestion {
     marks: number[];
 }
 
+export interface InlineQuizOption {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+}
+
+export interface InlineQuizSource {
+    chapter_name: string;
+    subtopic_name: string;
+}
+
+export interface InlineQuizQuestion {
+    id: number;
+    question: string;
+    options: InlineQuizOption;
+    correct: string;
+    explanation: string;
+    source: InlineQuizSource;
+}
+
 export interface ChatResponseData {
     answer: string;
     sources: ChatSourceInfo[];
     related_questions: ChatRelatedQuestion[];
+    inline_question: InlineQuizQuestion | null;
 }
 
 export const chatAPI = {
@@ -85,6 +107,15 @@ export const quizAPI = {
     generate: (subject: string, newQuiz: boolean = false) =>
         api.get(`/api/quiz/${encodeURIComponent(subject)}`, {
             params: newQuiz ? { new: true } : {},
+        }),
+};
+
+export const analysisAPI = {
+    topicGraph: (subject: string) =>
+        api.get(`/api/analysis/topic-graph/${encodeURIComponent(subject)}`),
+    summary: (subject: string, chapterId?: number, sentences?: number) =>
+        api.get(`/api/analysis/summary/${encodeURIComponent(subject)}`, {
+            params: { chapter_id: chapterId, sentences: sentences || 5 },
         }),
 };
 

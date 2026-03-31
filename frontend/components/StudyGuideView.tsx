@@ -20,7 +20,7 @@ import {
     ArrowLeft,
     TrendingUp,
 } from "lucide-react";
-import { guideAPI } from "@/lib/api";
+import { guideAPI, analysisAPI } from "@/lib/api";
 import { useSessionStore } from "@/lib/session-store";
 import type { Session, StudyGuideReport, GuideChapter, GuideQuestion } from "@/lib/types";
 import toast from "react-hot-toast";
@@ -313,7 +313,7 @@ export default function StudyGuideView({ session }: Props) {
                             </div>
                         </div>
                     </div>
-
+                    <TopicInsights subjectName={session.name} />
                     {/* Chapters */}
                     <div className="space-y-2">
                         {sortedChapters.map((ch) => (
@@ -459,8 +459,8 @@ function ChapterRow({
         freq >= 3
             ? "bg-blue-600 text-white"
             : freq >= 2
-            ? "bg-violet-100 text-violet-700"
-            : "bg-slate-100 text-slate-500";
+                ? "bg-violet-100 text-violet-700"
+                : "bg-slate-100 text-slate-500";
 
     return (
         <div className={`border rounded-xl overflow-hidden bg-white ${priorityStyle.border}`}>
@@ -632,6 +632,103 @@ function ChapterRow({
                         </div>
                     ) : (
                         <p className="text-xs text-slate-400">No past paper questions mapped to this chapter.</p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function TopicInsights({ subjectName }: { subjectName: string }) {
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+
+    const handleLoad = async () => {
+        if (data) {
+            setExpanded(!expanded);
+            return;
+        }
+        setLoading(true);
+        try {
+            const res = await analysisAPI.topicGraph(subjectName);
+            setData(res.data);
+            setExpanded(true);
+        } catch {
+            // optional feature, fail silently
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="mb-6">
+            <button
+                onClick={handleLoad}
+                disabled={loading}
+                className="flex items-center gap-1.5 text-xs text-slate-400
+                    hover:text-blue-600 transition-colors mb-3"
+            >
+                {loading ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                ) : expanded ? (
+                    <ChevronDown className="w-3 h-3" />
+                ) : (
+                    <ChevronRight className="w-3 h-3" />
+                )}
+                <TrendingUp className="w-3 h-3" />
+                Topic Importance Analysis
+            </button>
+
+            {expanded && data && (
+                <div className="border border-blue-100 rounded-xl overflow-hidden bg-white">
+                    <div className="px-4 py-3 bg-blue-50/50 border-b border-blue-100">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">
+                            Most Important Topics (by PageRank)
+                        </p>
+                    </div>
+                    <div className="divide-y divide-blue-50">
+                        {(data.ranked_topics || []).slice(0, 10).map((topic: any, i: number) => (
+                            <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                                <span className="text-[11px] text-slate-400 font-mono w-5 shrink-0">
+                                    {topic.rank}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-slate-700 truncate">
+                                        {topic.subtopic_name}
+                                    </p>
+                                    <p className="text-[11px] text-slate-400">
+                                        Ch {topic.chapter_id} · {topic.connections} connections
+                                    </p>
+                                </div>
+                                <span className="text-[11px] text-slate-400 font-mono shrink-0">
+                                    {(topic.pagerank_score * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {data.cross_chapter_topics?.length > 0 && (
+                        <>
+                            <div className="px-4 py-3 bg-violet-50/50 border-t border-b border-blue-100">
+                                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">
+                                    Cross-Chapter Topics
+                                </p>
+                            </div>
+                            <div className="divide-y divide-blue-50">
+                                {data.cross_chapter_topics.slice(0, 5).map((topic: any, i: number) => (
+                                    <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-slate-700">{topic.subtopic_name}</p>
+                                            <p className="text-[11px] text-slate-400">
+                                                From Ch {topic.chapter_id} · connects to Ch{" "}
+                                                {topic.connected_to_chapters.join(", ")}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
                     )}
                 </div>
             )}

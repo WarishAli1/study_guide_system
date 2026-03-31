@@ -186,6 +186,19 @@ def _build_all_subtopics(chapters: List[Dict]) -> List[Dict]:
     return all_subtopics
 
 
+_cross_encoder = None
+
+
+def _get_cross_encoder():
+    """Lazy-load cross-encoder for reranking."""
+    global _cross_encoder
+    if _cross_encoder is None:
+        from sentence_transformers import CrossEncoder
+        _cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+        logger.info("[Retriever] CrossEncoder loaded.")
+    return _cross_encoder
+
+
 def _hybrid_retrieve(
     query: str,
     query_keywords: List[str],
@@ -193,41 +206,33 @@ def _hybrid_retrieve(
     top_k: int = 5,
 ) -> List[Dict]:
     """
-    Hybrid retrieval: combine keyword scores and semantic scores
-    across ALL subtopics (not pre-filtered).
+    Three-stage hybrid retrieval:
+    1. Bi-encoder: compute keyword + semantic scores for ALL subtopics
+    2. Select top-20 candidates
+    3. Cross-encoder rerank: score query-document pairs together for true top-k
 
-    This ensures subtopics from any chapter can be retrieved
-    even if keywords don't match.
+    The cross-encoder sees query and document simultaneously,
+    making it dramatically more accurate than bi-encoder alone.
     """
     if not all_subtopics:
         return []
 
     model = _get_sentence_model()
 
-    # Step 1: Compute keyword scores for all subtopics
-    for sub in all_subtopics:
-        ch_kw_score = _keyword_overlap_score(query_keywords, sub["chapter_keywords"]) * 0.3
-        sub_kw_score = _keyword_overlap_score(query_keywords, sub["keywords"])
+    # ── Stage 1: Bi-encoder scoring (fast, broad) ────────────────
 
-        # Also check keyword overlap against subtopic_name and paragraph text
+    for sub in all_subtopics:
+        ch_kw_score = _keyword_overlap_score(query_keywords, sub.get("chapter_keywords", [])) * 0.3
+        sub_kw_score = _keyword_overlap_score(query_keywords, sub["keywords"])
         name_words = sub["subtopic_name"].lower().split()
         name_overlap = _keyword_overlap_score(query_keywords, name_words) * 0.5
-
         sub["keyword_score"] = sub_kw_score + ch_kw_score + name_overlap
 
-    # Step 2: Compute semantic scores for ALL subtopics
-    texts = []
-    for sub in all_subtopics:
-        # Include subtopic name prominently for better semantic matching
-        text = f"{sub['subtopic_name']}. {sub['paragraph'][:500]}"
-        texts.append(text)
-
+    texts = [f"{sub['subtopic_name']}. {sub['paragraph'][:500]}" for sub in all_subtopics]
     query_embedding = model.encode([query], normalize_embeddings=True)[0]
     candidate_embeddings = model.encode(texts, normalize_embeddings=True, batch_size=64)
     semantic_scores = np.dot(candidate_embeddings, query_embedding)
 
-    # Step 3: Combine scores
-    # Normalize keyword scores
     max_kw = max((sub["keyword_score"] for sub in all_subtopics), default=1.0)
     if max_kw == 0:
         max_kw = 1.0
@@ -236,20 +241,50 @@ def _hybrid_retrieve(
         kw_normalized = sub["keyword_score"] / max_kw
         semantic = float(semantic_scores[i])
         sub["semantic_score"] = semantic
+        sub["biencoder_score"] = 0.25 * kw_normalized + 0.75 * semantic
 
-        # Weight semantic much higher to prevent keyword bias
-        # Keyword acts as a small bonus, not a filter
-        sub["combined_score"] = 0.25 * kw_normalized + 0.75 * semantic
+    # ── Stage 2: Select top-20 for cross-encoder ─────────────────
 
-    # Step 4: Sort by combined score and pick top-k
-    # But ensure diversity: don't pick too many from the same chapter
-    all_subtopics_sorted = sorted(all_subtopics, key=lambda x: x["combined_score"], reverse=True)
+    all_subtopics_sorted = sorted(all_subtopics, key=lambda x: x["biencoder_score"], reverse=True)
+    top_candidates = all_subtopics_sorted[:20]
+
+    logger.info(f"[Retriever] Stage 1 (bi-encoder): top-20 from "
+                f"{len(set(str(s['chapter_id']) for s in top_candidates))} chapters")
+
+    # ── Stage 3: Cross-encoder reranking (accurate, slow) ────────
+
+    try:
+        cross_encoder = _get_cross_encoder()
+
+        pairs = [
+            [query, f"{sub['subtopic_name']}. {sub['paragraph'][:800]}"]
+            for sub in top_candidates
+        ]
+
+        cross_scores = cross_encoder.predict(pairs)
+
+        for i, sub in enumerate(top_candidates):
+            sub["cross_score"] = float(cross_scores[i])
+
+        # Sort by cross-encoder score (most accurate)
+        top_candidates.sort(key=lambda x: x["cross_score"], reverse=True)
+
+        logger.info(f"[Retriever] Stage 2 (cross-encoder): reranked, "
+                    f"top chapter = Ch {top_candidates[0]['chapter_id']}")
+
+    except Exception as e:
+        logger.warning(f"[Retriever] Cross-encoder failed, falling back to bi-encoder: {e}")
+        # Fall back to bi-encoder scores
+        for sub in top_candidates:
+            sub["cross_score"] = sub["biencoder_score"]
+
+    # ── Stage 4: Diversity-aware selection ────────────────────────
 
     selected = []
     chapter_counts: Dict[str, int] = {}
-    max_per_chapter = max(2, top_k // 2)  # allow at most half from one chapter
+    max_per_chapter = max(3, top_k // 2)
 
-    for sub in all_subtopics_sorted:
+    for sub in top_candidates:
         ch_key = str(sub["chapter_id"])
         current_count = chapter_counts.get(ch_key, 0)
 
@@ -259,10 +294,10 @@ def _hybrid_retrieve(
             if len(selected) >= top_k:
                 break
 
-    # If not enough due to diversity constraint, fill from remaining
+    # Fill remaining if diversity constraint was too strict
     if len(selected) < top_k:
         selected_ids = {(s["chapter_id"], s["subtopic_id"]) for s in selected}
-        for sub in all_subtopics_sorted:
+        for sub in top_candidates:
             key = (sub["chapter_id"], sub["subtopic_id"])
             if key not in selected_ids:
                 selected.append(sub)
@@ -270,9 +305,13 @@ def _hybrid_retrieve(
                 if len(selected) >= top_k:
                     break
 
+    # Use cross_score as the final combined_score
+    for sub in selected:
+        sub["combined_score"] = sub.get("cross_score", sub.get("biencoder_score", 0))
+
     logger.info(
-        f"[Retriever] Hybrid retrieval: {len(selected)} chunks from chapters "
-        f"{list(set(str(s['chapter_id']) for s in selected))}"
+        f"[Retriever] Final: {len(selected)} chunks from chapters "
+        f"{sorted(set(str(s['chapter_id']) for s in selected))}"
     )
 
     return selected
