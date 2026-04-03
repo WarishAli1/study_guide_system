@@ -76,6 +76,10 @@ interface SessionStore {
     getActiveSession: () => Session | undefined;
 }
 
+type LegacySession = Partial<Session> & {
+    messages?: ChatMessage[];
+};
+
 const SessionContext = createContext<SessionStore | undefined>(undefined);
 
 const STORAGE_KEY = "examguide_sessions";
@@ -152,24 +156,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const [hydrated, setHydrated] = useState(false);
 
     useEffect(() => {
-        const loaded = loadFromStorage<Session[]>(STORAGE_KEY, []);
+        const loaded = loadFromStorage<LegacySession[]>(STORAGE_KEY, []);
         const migrated = loaded.map((s) => ({
             ...s,
             cachedGuide: s.cachedGuide ?? null,
             quizRecords: s.quizRecords ?? [],
             conversations: s.conversations ?? (
-                s.messages && (s as any).messages.length > 0
+                s.messages && s.messages.length > 0
                     ? [{
                         id: uuidv4(),
-                        title: (s as any).messages.find((m: any) => m.role === "user")?.content?.slice(0, 40) || "Chat",
-                        createdAt: (s as any).messages[0]?.timestamp || s.createdAt,
-                        updatedAt: (s as any).messages[(s as any).messages.length - 1]?.timestamp || s.updatedAt,
-                        messages: (s as any).messages,
+                        title: s.messages.find((m) => m.role === "user")?.content?.slice(0, 40) || "Chat",
+                        createdAt: s.messages[0]?.timestamp || s.createdAt || new Date().toISOString(),
+                        updatedAt: s.messages[s.messages.length - 1]?.timestamp || s.updatedAt || new Date().toISOString(),
+                        messages: s.messages,
                     }]
                     : []
             ),
         }));
-        const cleaned = migrated.map(({ messages, ...rest }: any) => rest);
+        const cleaned = migrated.map(({ messages: _messages, ...rest }) => rest as Session);
         setSessions(cleaned);
         setActiveSessionId(loadFromStorage<string | null>(ACTIVE_SS_KEY, null));
         setActiveConversationId(loadFromStorage<string | null>(ACTIVE_CONV_KEY, null));
