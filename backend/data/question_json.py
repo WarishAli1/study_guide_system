@@ -4,9 +4,7 @@ import json
 import time
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering
-from sentence_transformers import SentenceTransformer, util
 from config import Config
-import torch
 from openai import OpenAI
 
 client = OpenAI(
@@ -14,7 +12,25 @@ client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
 )
 MODEL_NAME = Config.MODEL_NAME
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+_torch = None
+_sentence_transformers = None
+_st_util = None
+_device = None
+
+
+def _get_ml_runtime():
+    """Lazy-load heavy ML dependencies only when question processing runs."""
+    global _torch, _sentence_transformers, _st_util, _device
+    if _torch is None or _sentence_transformers is None or _st_util is None:
+        import torch as _torch_mod
+        from sentence_transformers import SentenceTransformer, util as st_util
+
+        _torch = _torch_mod
+        _sentence_transformers = SentenceTransformer
+        _st_util = st_util
+        _device = "cuda" if _torch.cuda.is_available() else "cpu"
+    return _sentence_transformers, _st_util, _device
 
 CLEAN_PROMPT = Config.QUESTION_CLEAN_PROMPT
 
@@ -292,7 +308,8 @@ def _build_subtopic_records(chapters: list) -> tuple:
 
 def assign_chapters_to_questions(subject_name: str, questions: list) -> list:
     chapters = load_chapters(subject_name)
-    model    = SentenceTransformer("all-MiniLM-L6-v2", device=device)
+    SentenceTransformer, _, device = _get_ml_runtime()
+    model = SentenceTransformer("all-MiniLM-L6-v2", device=device)
 
     records, texts = _build_subtopic_records(chapters)
 
@@ -375,12 +392,13 @@ def assign_chapters_to_questions(subject_name: str, questions: list) -> list:
 
 
 def cluster_similar_questions(questions, threshold=0.7):
+    SentenceTransformer, st_util, device = _get_ml_runtime()
     model      = SentenceTransformer('all-MiniLM-L6-v2', device=device)
     embeddings = model.encode(
         [q["question"] for q in questions],
         convert_to_tensor=True, device=device
     )
-    sim_matrix      = util.cos_sim(embeddings, embeddings).cpu().numpy()
+    sim_matrix      = st_util.cos_sim(embeddings, embeddings).cpu().numpy()
     distance_matrix = 1 - sim_matrix
     clustering = AgglomerativeClustering(
         metric='precomputed', linkage='complete',
