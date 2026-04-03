@@ -43,7 +43,7 @@ export interface ChatSource {
     chapter_name: string;
     subtopic_id: string;
     subtopic_name: string;
-    source_text: string;
+    source_text?: string;
 }
 
 export interface ChatRelatedQuestion {

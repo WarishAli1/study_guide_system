@@ -105,13 +105,17 @@ export default function ChatView({ session }: Props) {
                 });
 
                 const data: ChatResponseData = res.data;
+                const sources = data.sources.map((source) => ({
+                    ...source,
+                    source_text: source.source_text ?? "",
+                }));
 
                 const assistantMsg: ChatMessage = {
                     id: uuidv4(),
                     role: "assistant",
                     content: data.answer,
                     timestamp: new Date().toISOString(),
-                    sources: data.sources,
+                    sources,
                     relatedQuestions: data.related_questions,
                     inlineQuestion: data.inline_question ?? undefined,
                 };

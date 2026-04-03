@@ -61,6 +61,7 @@ export interface ChatSourceInfo {
     chapter_name: string;
     subtopic_id: string;
     subtopic_name: string;
+    source_text?: string;
 }
 
 export interface ChatRelatedQuestion {
