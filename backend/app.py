@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from auth import login, users
 from upload import upload_file
+from config import Config
 from report.api import router as report_router
 from data.dataset_api import router as dataset_router
 from chat.api import router as chat_router
@@ -25,7 +26,7 @@ def on_startup():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=Config.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,4 +49,4 @@ def home():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("app:app", host=Config.HOST, port=Config.PORT, reload=Config.RELOAD)

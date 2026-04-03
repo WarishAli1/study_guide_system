@@ -65,9 +65,9 @@ def create_jwt_token(user_id: int, email: str) -> str:
     """
     Creates a signed JWT for the frontend to store.
     """
-    secret = getattr(Config, "JWT_SECRET", "change-me")
-    algorithm = getattr(Config, "JWT_ALGORITHM", "HS256")
-    expire_days = int(getattr(Config, "JWT_EXPIRE_DAYS", 7))
+    secret = Config.JWT_SECRET_KEY
+    algorithm = Config.JWT_ALGORITHM
+    expire_days = Config.JWT_EXPIRE_DAYS
 
     now = datetime.now(timezone.utc)
     payload = {

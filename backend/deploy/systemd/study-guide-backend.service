@@ -1,0 +1,15 @@
+[Unit]
+Description=Study Guide FastAPI Backend
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/study_guide_system/backend
+EnvironmentFile=/opt/study_guide_system/backend/.env
+ExecStart=/opt/study_guide_system/backend/venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

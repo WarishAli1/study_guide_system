@@ -15,17 +15,38 @@ _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_BACKEND_DIR)
 
 
+def _parse_csv_env(name: str, default: str = "") -> list[str]:
+    raw = os.getenv(name, default)
+    return [v.strip() for v in raw.split(",") if v.strip()]
+
+
 class Config:
+    # ── Runtime ───────────────────────────────────────────
+    ENV = os.getenv("ENV", "development").lower()
+    HOST = os.getenv("HOST", "0.0.0.0")
+    PORT = int(os.getenv("PORT", "8000"))
+    RELOAD = os.getenv("RELOAD", "false").lower() == "true"
+
     # ── Auth ──────────────────────────────────────────────
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback-secret-key")
+    JWT_SECRET = JWT_SECRET_KEY
+    JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+    JWT_EXPIRE_DAYS = int(os.getenv("JWT_EXPIRE_DAYS", "7"))
+
+    # CORS: use comma-separated list in production.
+    # Example: CORS_ORIGINS=https://your-app.vercel.app,https://www.yourdomain.com
+    CORS_ORIGINS = _parse_csv_env(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    )
 
     # ── Database ──────────────────────────────────────────
-    DB_PATH = os.path.join(_BACKEND_DIR, "database.db")
+    DB_PATH = os.getenv("DB_PATH", os.path.join(_BACKEND_DIR, "database.db"))
 
     # ── Directory layout ──────────────────────────────────
     # datasets/ lives at the project root, next to backend/
-    DATASETS_DIR = os.path.join(_PROJECT_ROOT, "datasets")
+    DATASETS_DIR = os.getenv("DATASETS_DIR", os.path.join(_PROJECT_ROOT, "datasets"))
     UPLOAD_DIR = os.path.join(DATASETS_DIR, "uploads")        # original files
     RAW_TEXT_DIR = os.path.join(DATASETS_DIR, "raw_text")      # extracted .txt
     CHAPTER_JSON_DIR = os.path.join(DATASETS_DIR, "chapter_json")
@@ -34,6 +55,24 @@ class Config:
     CLEANED_TEXT_DIR = os.path.join(DATASETS_DIR, "cleaned_text")
 
     REPORTS_DIR = os.path.join(DATASETS_DIR, "reports")  # final reports
+
+    # Ensure required directories exist so deployments on ephemeral hosts
+    # (e.g. Render free tier) can start without manual directory creation.
+    _db_dir = os.path.dirname(DB_PATH)
+    if _db_dir:
+        os.makedirs(_db_dir, exist_ok=True)
+
+    for _dir in (
+        DATASETS_DIR,
+        UPLOAD_DIR,
+        RAW_TEXT_DIR,
+        CHAPTER_JSON_DIR,
+        QUESTION_JSON_DIR,
+        SYLLABUS_JSON_DIR,
+        CLEANED_TEXT_DIR,
+        REPORTS_DIR,
+    ):
+        os.makedirs(_dir, exist_ok=True)
     # ── OCR ───────────────────────────────────────────────
     # If tesseract is not on PATH, set the full path here:
     TESSERACT_CMD = os.getenv("TESSERACT_CMD", None)
