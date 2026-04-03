@@ -2,10 +2,12 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useGoogleLogin } from "@react-oauth/google";
+import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
+import toast from "react-hot-toast";
 import { useAuth } from "@/lib/auth";
 import { BookOpen, FileText, BarChart3, CircleHelp } from "lucide-react";
-import toast from "react-hot-toast";
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 export default function LoginPage() {
     const { login, isAuthenticated, isLoading } = useAuth();
@@ -14,6 +16,26 @@ export default function LoginPage() {
     useEffect(() => {
         if (!isLoading && isAuthenticated) router.replace("/dashboard");
     }, [isAuthenticated, isLoading, router]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-dvh flex items-center justify-center bg-[#F8FAFF]">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+            </div>
+        );
+    }
+
+    return GOOGLE_CLIENT_ID ? (
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <GoogleLoginContent login={login} />
+        </GoogleOAuthProvider>
+    ) : (
+        <LoginFallback />
+    );
+}
+
+function GoogleLoginContent({ login }: { login: (googleToken: string) => Promise<void> }) {
+    const router = useRouter();
 
     const handleGoogleLogin = useGoogleLogin({
         flow: "implicit",
@@ -30,14 +52,6 @@ export default function LoginPage() {
             toast.error("Google sign-in failed");
         },
     });
-
-    if (isLoading) {
-        return (
-            <div className="min-h-dvh flex items-center justify-center bg-[#F8FAFF]">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-dvh w-full bg-[#F8FAFF] flex items-center justify-center px-4 py-12">
@@ -134,6 +148,39 @@ export default function LoginPage() {
                             "Built for students who value their time."
                         </p>
                     </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function LoginFallback() {
+    return (
+        <div className="min-h-dvh w-full bg-[#F8FAFF] flex items-center justify-center px-4 py-12">
+            <div className="w-full max-w-4xl rounded-2xl border border-blue-100 shadow-xl shadow-blue-50 overflow-hidden flex min-h-[520px] bg-white">
+                <div className="flex flex-col justify-center w-full px-10 py-12">
+                    <div className="flex items-center gap-2.5 mb-10">
+                        <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-200">
+                            <BookOpen className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-base font-bold text-slate-900 tracking-tight">ExamGuide</span>
+                    </div>
+                    <p className="text-[11px] font-semibold text-blue-500 uppercase tracking-widest mb-2">
+                        Login unavailable
+                    </p>
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-snug mb-2">
+                        Google client id is missing.
+                    </h1>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                        Add NEXT_PUBLIC_GOOGLE_CLIENT_ID in Vercel to enable login.
+                    </p>
+                    <button
+                        type="button"
+                        disabled
+                        className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-medium text-slate-400"
+                    >
+                        <span className="flex-1 text-center">Continue with Google</span>
+                    </button>
                 </div>
             </div>
         </div>
