@@ -9,6 +9,7 @@ google-auth-oauthlib
 scikit-learn
 numpy
 PyMuPDF
+pdfplumber
 Pillow
 pytesseract
 nltk
