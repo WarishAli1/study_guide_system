@@ -23,13 +23,19 @@ export const authAPI = {
 };
 
 export const uploadAPI = {
-    uploadFile: (file: File, docType: string, subject: string) => {
+    uploadFile: (
+        file: File,
+        docType: string,
+        subject: string,
+        options?: { signal?: AbortSignal }
+    ) => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("doc_type", docType);
         formData.append("subject", subject);
         return api.post("api/upload", formData, {
             headers: { "Content-Type": "multipart/form-data" },
+            signal: options?.signal,
         });
     },
     deleteUpload: (subject: string, docType: string) =>

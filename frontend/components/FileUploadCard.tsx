@@ -19,6 +19,8 @@ import type { SessionDocument } from "@/lib/types";
 import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 
+const UPLOAD_TIMEOUT_MS = 3 * 60 * 1000;
+
 interface Props {
     sessionId: string;
     existingDocuments: SessionDocument[];
@@ -123,6 +125,8 @@ export default function FileUploadCard({ sessionId, existingDocuments }: Props) 
 
     const uploadOne = async (file: File, docType: string) => {
         const docId = uuidv4();
+        const abortController = new AbortController();
+        const timeoutId = window.setTimeout(() => abortController.abort(), UPLOAD_TIMEOUT_MS);
         const newDoc: SessionDocument = {
             id: docId,
             name: file.name,
@@ -135,17 +139,24 @@ export default function FileUploadCard({ sessionId, existingDocuments }: Props) 
         try {
             const session = sessions.find((s) => s.id === sessionId);
             const subject = session?.name || "general";
-            const res = await uploadAPI.uploadFile(file, docType, subject);
+            const res = await uploadAPI.uploadFile(file, docType, subject, {
+                signal: abortController.signal,
+            });
             updateDocument(sessionId, docId, { status: "success", uploadId: res.data.upload_id });
             toast.success(`${file.name} uploaded`);
         } catch (err: any) {
             const detail = err?.response?.data?.detail;
-            let errorMsg = `Failed to upload ${file.name}`;
+            const isTimeout = err?.code === "ERR_CANCELED" && abortController.signal.aborted;
+            let errorMsg = isTimeout
+                ? `Upload timed out for ${file.name}. Please retry.`
+                : `Failed to upload ${file.name}`;
             if (typeof detail === "string") errorMsg = detail;
             else if (Array.isArray(detail))
                 errorMsg = detail.map((d: any) => d.msg || JSON.stringify(d)).join("; ");
             updateDocument(sessionId, docId, { status: "error", errorMessage: errorMsg });
             toast.error(errorMsg);
+        } finally {
+            window.clearTimeout(timeoutId);
         }
     };
 
@@ -338,9 +349,16 @@ export default function FileUploadCard({ sessionId, existingDocuments }: Props) 
                                                 </span>
                                             )}
                                             {doc.status === "error" && (
-                                                <span className="flex items-center gap-1.5 text-red-500" title={doc.errorMessage}>
-                                                    <XCircle className="w-3.5 h-3.5" /> Failed
-                                                </span>
+                                                <div className="text-red-500" title={doc.errorMessage}>
+                                                    <span className="flex items-center gap-1.5">
+                                                        <XCircle className="w-3.5 h-3.5" /> Failed
+                                                    </span>
+                                                    {doc.errorMessage && (
+                                                        <p className="text-[11px] leading-tight mt-0.5 text-red-400 max-w-[260px] truncate">
+                                                            {doc.errorMessage}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             )}
                                         </td>
                                         <td className="px-4 py-2.5 text-slate-400 text-xs">

@@ -161,6 +161,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             ...s,
             cachedGuide: s.cachedGuide ?? null,
             quizRecords: s.quizRecords ?? [],
+            documents: (s.documents ?? []).map((d) =>
+                d.status === "uploading"
+                    ? {
+                        ...d,
+                        status: "error" as const,
+                        errorMessage: d.errorMessage || "Upload interrupted. Please retry.",
+                    }
+                    : d
+            ),
             conversations: s.conversations ?? (
                 s.messages && s.messages.length > 0
                     ? [{
